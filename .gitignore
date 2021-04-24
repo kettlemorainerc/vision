@@ -1,0 +1,7 @@
+build
+.gradle
+VIDEO_DATA
+.idea
+opencv-stuff/*
+!opencv-stuff/opencv-3.4.7-vc14_vc15.exe
+!opencv-stuff/srcs.zip

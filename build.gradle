@@ -1,0 +1,73 @@
+plugins {
+    id 'java'
+    id 'application'
+    id "edu.wpi.first.GradleRIO" version "2020.3.2"
+}
+
+jar {
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest("org.usfirst.frc.team2077.video.Main")
+}
+
+def targetConfiguration = "aimingFEThree2020";
+targetCompatibility = (JavaVersion.VERSION_11)
+sourceCompatibility = (JavaVersion.VERSION_11)
+
+task copyVideoData(type: Copy) {
+    from("VIDEO_DATA") {
+        include "*"
+    }
+    into "$buildDir/tmp/jniExtractDir/VIDEO_DATA"
+}
+
+tasks.withType(JavaExec) {
+    workingDir "$buildDir/tmp/jniExtractDir"
+    dependsOn tasks.copyVideoData
+    argsString(targetConfiguration)
+    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}:$buildDir/tmp/jniExtractDir"
+}
+
+run {
+    main = "org.usfirst.frc.team2077.video.Main"
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    mavenLocal()
+    maven {
+        url 'http://maven.icm.edu.pl/artifactory/repo/'
+    }
+}
+
+run {
+    dependsOn tasks.extractTestJNI
+    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}:$buildDir/tmp/jniExtractDir"
+
+}
+
+dependencies {
+    implementation wpi.deps.wpilib()
+    nativeZip wpi.deps.wpilibJni(wpi.platforms.roborio)
+    nativeDesktopZip wpi.deps.wpilibJni(wpi.platforms.desktop)
+
+    implementation wpi.deps.vendor.java()
+    nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
+    nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
+
+    implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
+    implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-core', version: '0.9.1'
+    implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
+    implementation group: 'net.java.dev.jna', name: 'jna', version: '4.5.1'
+    implementation files("network-tables/ntcore-java-4.0.0.jar")
+    implementation files("network-tables/ntcore-jni-4.0.0-all.jar")
+    implementation files("network-tables/wpiutil-java-3.0.0.jar")
+
+}
+
+task startNetwork(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = "org.usfirst.frc.team2077.vision.NTMain"
+
+    dependsOn(tasks.build)
+}
