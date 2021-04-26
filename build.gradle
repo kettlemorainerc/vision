@@ -17,14 +17,14 @@ task copyVideoData(type: Copy) {
     from("VIDEO_DATA") {
         include "*"
     }
-    into "$buildDir/tmp/jniExtractDir/VIDEO_DATA"
+    into "$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA"
 }
 
 tasks.withType(JavaExec) {
-    workingDir "$buildDir/tmp/jniExtractDir"
+    workingDir "$buildDir${File.separator}tmp${File.separator}jniExtractDir"
     dependsOn tasks.copyVideoData
     argsString(targetConfiguration)
-    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}:$buildDir/tmp/jniExtractDir"
+    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
 }
 
 run {
@@ -42,7 +42,7 @@ repositories {
 
 run {
     dependsOn tasks.extractTestJNI
-    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}:$buildDir/tmp/jniExtractDir"
+    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
 
 }
 
@@ -59,9 +59,9 @@ dependencies {
     implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-core', version: '0.9.1'
     implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
     implementation group: 'net.java.dev.jna', name: 'jna', version: '4.5.1'
-    implementation files("network-tables/ntcore-java-4.0.0.jar")
-    implementation files("network-tables/ntcore-jni-4.0.0-all.jar")
-    implementation files("network-tables/wpiutil-java-3.0.0.jar")
+    implementation files("network-tables${File.separator}ntcore-java-4.0.0.jar")
+    implementation files("network-tables${File.separator}ntcore-jni-4.0.0-all.jar")
+    implementation files("network-tables${File.separator}wpiutil-java-3.0.0.jar")
 
 }
 
