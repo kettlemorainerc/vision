@@ -20,12 +20,22 @@ task copyVideoData(type: Copy) {
     into "$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA"
 }
 
+task saveVideoData(type: Copy) {
+    from("$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA") {
+        include '*'
+    }
+    into "$projectDir/VIDEO_DATA"
+}
+
 tasks.withType(JavaExec) {
     workingDir "$buildDir${File.separator}tmp${File.separator}jniExtractDir"
     dependsOn tasks.copyVideoData
     argsString(targetConfiguration)
     systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
+    finalizedBy(tasks.saveVideoData)
 }
+
+
 
 run {
     main = "org.usfirst.frc.team2077.video.Main"

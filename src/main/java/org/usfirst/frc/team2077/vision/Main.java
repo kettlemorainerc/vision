@@ -192,6 +192,7 @@ public class Main {
             videoImage_[0] = new BufferedImage(resolution_.width, resolution_.height, BufferedImage.TYPE_INT_RGB);
             videoImage_[1] = new BufferedImage(resolution_.width, resolution_.height, BufferedImage.TYPE_INT_RGB);
 
+            System.out.println(String.format("Video Info overlay file: %s", videoInfo_.overlayFile_));
             (new File(videoInfo_.overlayFile_)).getParentFile().mkdirs();
             overlayFileChannel_ = new RandomAccessFile(new File(videoInfo_.overlayFile_), "rw").getChannel();
             overlayMappedBuffer_ = overlayFileChannel_.map(MapMode.READ_WRITE, 0, resolution_.width * resolution_.height * 4).order(byteOrder);
