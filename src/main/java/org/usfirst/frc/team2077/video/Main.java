@@ -8,6 +8,7 @@ import org.usfirst.frc.team2077.vvcommon.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.nio.*;
 import java.util.Timer;
 import java.util.*;
@@ -112,6 +113,7 @@ public class Main {
         byteOrder_ = "BE".equalsIgnoreCase(bo) ? ByteOrder.BIG_ENDIAN : "LE".equalsIgnoreCase(bo) ? ByteOrder.LITTLE_ENDIAN : ByteOrder.nativeOrder();
         // TODO: check BufferedImage byte order
 
+        System.out.println(System.getProperty("java.library.path"));
         initSources();
 
         initViews();

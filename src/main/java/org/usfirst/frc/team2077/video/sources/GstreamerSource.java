@@ -9,16 +9,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.freedesktop.gstreamer.Bin;
-import org.freedesktop.gstreamer.Buffer;
-import org.freedesktop.gstreamer.Caps;
-import org.freedesktop.gstreamer.Element;
-import org.freedesktop.gstreamer.Gst;
-import org.freedesktop.gstreamer.Pipeline;
-import org.freedesktop.gstreamer.Sample;
-import org.freedesktop.gstreamer.Structure;
+import com.sun.jna.Pointer;
+import org.freedesktop.gstreamer.*;
 import org.freedesktop.gstreamer.elements.AppSink;
 import org.freedesktop.gstreamer.event.EOSEvent;
+import org.freedesktop.gstreamer.glib.GError;
+import org.freedesktop.gstreamer.lowlevel.GstAPI;
+import org.freedesktop.gstreamer.lowlevel.GstParseAPI;
 import org.usfirst.frc.team2077.video.Main;
 import org.usfirst.frc.team2077.video.interfaces.RenderedView;
 import org.usfirst.frc.team2077.video.interfaces.VideoSource;
@@ -113,7 +110,8 @@ public final class GstreamerSource extends AbstractSource implements VideoSource
         System.out.println("INFO:" + name_ + ": STARTING LOCAL GSTREAMER PIPELINE:" + pipelineString_);
         
         try {
-            Bin bin = Bin.launch(pipelineString_, true);
+            Bin bin = Gst.parseBinFromDescription(pipelineString_, true);
+
             for (Element e : bin.getElementsSorted()) { // debugging output
                 System.out.println("INFO:" + name_ + ": ELEMENT:" + e + "(" + e.getSinkPads().size() + "," + e.getSrcPads().size() + ")");
             }

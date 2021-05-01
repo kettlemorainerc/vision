@@ -14,8 +14,12 @@ targetCompatibility = (JavaVersion.VERSION_11)
 sourceCompatibility = (JavaVersion.VERSION_11)
 
 task copyVideoData(type: Copy) {
+    def buildVideoData = files("$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA")[0];
+    def excludeList = (buildVideoData == null || buildVideoData.list() == null ? new String[0] : buildVideoData.list());
+    logger.lifecycle("Excluding: {}", excludeList)
     from("VIDEO_DATA") {
         include "*"
+        exclude(excludeList )
     }
     into "$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA"
 }
@@ -24,7 +28,7 @@ task saveVideoData(type: Copy) {
     from("$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA") {
         include '*'
     }
-    into "$projectDir/VIDEO_DATA"
+    into "VIDEO_DATA"
 }
 
 tasks.withType(JavaExec) {
@@ -51,7 +55,8 @@ repositories {
 }
 
 run {
-    dependsOn tasks.extractTestJNI
+//    dependsOn tasks.extractTestJNI
+    shouldRunAfter tasks.extractTestJNI
     systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
 
 }
@@ -66,12 +71,14 @@ dependencies {
     nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
 
     implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
-    implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-core', version: '0.9.1'
+    implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-core', version: '1.4.0'
+    implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-swing', version: '0.9.0'
     implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
-    implementation group: 'net.java.dev.jna', name: 'jna', version: '4.5.1'
-    implementation files("network-tables${File.separator}ntcore-java-4.0.0.jar")
-    implementation files("network-tables${File.separator}ntcore-jni-4.0.0-all.jar")
-    implementation files("network-tables${File.separator}wpiutil-java-3.0.0.jar")
+    implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
+    implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
+//    implementation files("network-tables${File.separator}ntcore-java-4.0.0.jar")
+//    implementation files("network-tables${File.separator}ntcore-jni-4.0.0-all.jar")
+//    implementation files("network-tables${File.separator}wpiutil-java-3.0.0.jar")
 
 }
 
