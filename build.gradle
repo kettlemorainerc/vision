@@ -14,12 +14,8 @@ targetCompatibility = (JavaVersion.VERSION_11)
 sourceCompatibility = (JavaVersion.VERSION_11)
 
 task copyVideoData(type: Copy) {
-    def buildVideoData = files("$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA")[0];
-    def excludeList = (buildVideoData == null || buildVideoData.list() == null ? new String[0] : buildVideoData.list());
-    logger.lifecycle("Excluding: {}", excludeList)
     from("VIDEO_DATA") {
         include "*"
-        exclude(excludeList )
     }
     into "$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA"
 }
@@ -32,17 +28,11 @@ task saveVideoData(type: Copy) {
 }
 
 tasks.withType(JavaExec) {
-    workingDir "$buildDir${File.separator}tmp${File.separator}jniExtractDir"
     dependsOn tasks.copyVideoData
+    finalizedBy(tasks.saveVideoData)
+    workingDir "$buildDir${File.separator}tmp${File.separator}jniExtractDir"
     argsString(targetConfiguration)
     systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
-    finalizedBy(tasks.saveVideoData)
-}
-
-
-
-run {
-    main = "org.usfirst.frc.team2077.video.Main"
 }
 
 repositories {
@@ -55,10 +45,10 @@ repositories {
 }
 
 run {
-//    dependsOn tasks.extractTestJNI
     shouldRunAfter tasks.extractTestJNI
     systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
 
+    main = "org.usfirst.frc.team2077.video.Main"
 }
 
 dependencies {
