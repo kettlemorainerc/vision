@@ -3,6 +3,7 @@ package org.usfirst.frc.team2077.video;
 import org.usfirst.frc.team2077.video.core.*;
 import org.usfirst.frc.team2077.video.interfaces.*;
 import org.usfirst.frc.team2077.video.sources.*;
+import org.usfirst.frc.team2077.vision.NTMain;
 import org.usfirst.frc.team2077.vvcommon.*;
 
 import javax.swing.*;
@@ -12,6 +13,7 @@ import java.io.File;
 import java.nio.*;
 import java.util.Timer;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.logging.*;
 
@@ -42,6 +44,7 @@ public class Main {
     protected static Collection<VideoView> mappedViews_ = new HashSet<>();
 
     protected static JFrame videoFrame_;
+    private static Thread networkTables;
 
     /**
      * @param args List of configuration property paths. Each path may be either an external
@@ -50,6 +53,17 @@ public class Main {
     public static void main(String[] args) {
 
         init(args);
+
+        networkTables = new Thread(() -> {
+            try {
+                TimeUnit.MILLISECONDS.sleep(200);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            org.usfirst.frc.team2077.vision.NTMain.main(args);
+        });
+
+        networkTables.start();
 
         JToggleButton button0 = null;
         JComponent panel = new JPanel(new GridLayout(0, 2));
@@ -113,7 +127,6 @@ public class Main {
         byteOrder_ = "BE".equalsIgnoreCase(bo) ? ByteOrder.BIG_ENDIAN : "LE".equalsIgnoreCase(bo) ? ByteOrder.LITTLE_ENDIAN : ByteOrder.nativeOrder();
         // TODO: check BufferedImage byte order
 
-        System.out.println(System.getProperty("java.library.path"));
         initSources();
 
         initViews();

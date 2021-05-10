@@ -14,8 +14,6 @@ public class NTMain extends org.usfirst.frc.team2077.vision.Main {
     public static NetworkTableInstance networkTable_;
 
     public static void main( String[] args ) {
-        System.out.println(new File("."));
-        System.out.println(Arrays.toString(new File(".").listFiles()));
         init( args );
 
         networkTable_ = NetworkTableInstance.getDefault();
@@ -43,6 +41,7 @@ public class NTMain extends org.usfirst.frc.team2077.vision.Main {
         
         String viewName = visionView.getString(null);
         VisionView view = views_.get(viewName);
+
         if (view != null) {
             visionFrame_.setContentPane(view.getJComponent());
             if (!visionFrame_.isVisible()) {

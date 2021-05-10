@@ -1,23 +1,8 @@
-As of starting the project in order to successfully run you must run two separate processes, one utilizing
-
-video.Main aimingFEThree2020
-vision.NTMain aimingFEThree2020
-
 # Starting
-You will need to run vision once before attempting anything. If you use intellij you can use the internal terminal and run 
-`git update-index --assume-unchanged VIDEO_DATA/*` to prevent arbitrary updates that mean nothing from being caught by git.
+If you use intellij you can use the internal terminal and run `git update-index --assume-unchanged VIDEO_DATA/*`
+to prevent arbitrary updates that mean nothing from being caught by git.
 
-After starting, and closing, vision once your local files should be setup in such a way to be used with the application as a whole.
-In order to start you will want to run the `startNetwork` gradle command. Either through the intellij Gradle menu, or by running one of the following in the terminal: `./gradlew startNetwork` or `gradlew startNetwork`.
-
-Once that has started up you should see some message starting with something similar to `NT: client:`.
-
-After that has starting you're free start up the vision be running the `run` task instead of the `startNetwork` task.
-
-## startNetwork
-should be under the "other' tasks group in the IntelliJ Gradle menu.
-
-Otherwise you can run terminal commands. Depending on the terminal either `./gradlew startNetwork` or `gradlew startNetwork` should work.
+In order to start you will want to run the `run` task. It should set everything up.
 
 ## run
 should be under the "application" tasks group in the IntelliJ Gradle menu.
