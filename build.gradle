@@ -1,3 +1,5 @@
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
 plugins {
     id 'java'
     id 'application'
@@ -68,9 +70,12 @@ dependencies {
     implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
-//    implementation files("network-tables${File.separator}ntcore-java-4.0.0.jar")
-//    implementation files("network-tables${File.separator}ntcore-jni-4.0.0-all.jar")
-//    implementation files("network-tables${File.separator}wpiutil-java-3.0.0.jar")
+
+    if(DefaultNativePlatform.currentOperatingSystem.linux) {
+        implementation files("network-tables${File.separator}ntcore-java-4.0.0.jar")
+        implementation files("network-tables${File.separator}ntcore-jni-4.0.0-all.jar")
+        implementation files("network-tables${File.separator}wpiutil-java-3.0.0.jar")
+    }
 
 }
 
