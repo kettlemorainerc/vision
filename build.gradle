@@ -6,10 +6,10 @@ plugins {
     id "edu.wpi.first.GradleRIO" version "2020.3.2"
 }
 
-jar {
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest("org.usfirst.frc.team2077.video.Main")
-}
+//jar {
+//    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+//    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest("org.usfirst.frc.team2077.video.Main")
+//}
 
 def targetConfiguration = "aimingFEThree2020";
 targetCompatibility = (JavaVersion.VERSION_11)
