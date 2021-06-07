@@ -1,0 +1,21 @@
+SORIGNAL - Mr.B
+H min = 18
+H max = 49
+S min = 148
+S min = 255
+V min = 106
+V max = 255
+R min = 20
+R max = 100
+Threashold = 100
+
+
+
+H min =
+H max =
+S min =
+V min =
+V max =
+R min =
+R max =
+Threashold = 66
