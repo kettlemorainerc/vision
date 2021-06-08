@@ -9,12 +9,13 @@ import org.usfirst.frc.team2077.vvcommon.*;
 import java.awt.*;
 import java.awt.geom.*;
 import java.io.*;
-import java.net.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import java.util.logging.Logger;
 import java.util.logging.*;
+import java.util.regex.*;
 
 import static java.util.logging.Level.*;
 
@@ -65,21 +66,18 @@ public abstract class AbstractSource implements VideoSource {
     public final double cameraX_;
     public final double cameraY_;
     public final double cameraZ_;
-    protected final String name_;
-    protected final String remote_;
-    protected final String user_;
-    protected final String password_;
-    protected final String command_;
+    protected final String name_, remote_, user_, password_, command_;
     // camera transform
     protected final SourceProjection projection_;
     protected final Map<String, int[]> viewMap_ = new LinkedHashMap<>();
     protected Dimension resolution_ = null;
     protected Set<RenderedView> views_ = new HashSet<>();
-    protected long execBaseTime_;
-    private Session session_ = null;
-    private ChannelExec exec_ = null;
-    private Object execLock_ = new Object() {
+    TimeOut timeOut;
+    AtomicReference<ChannelExec> exec_ = new AtomicReference<>();
+    final Object execLock_ = new Object() {
     };
+
+    // for binding when present
     private Optional<Integer> lastStreamPid = Optional.empty();
 
     // TODO: split remote functions into separate class
@@ -94,14 +92,10 @@ public abstract class AbstractSource implements VideoSource {
         name_ = name;
 
         // remote server access
-        remote_ = Main.getProperties()
-                      .getProperty(name_ + ".remote");
-        user_ = Main.getProperties()
-                    .getProperty(name_ + ".user", "pi");
-        password_ = Main.getProperties()
-                        .getProperty(name_ + ".password", "raspberry");
-        command_ = Main.getProperties()
-                       .getProperty(name_ + ".command");
+        remote_ = Main.getProperties().getProperty(name_ + ".remote");
+        user_ = Main.getProperties().getProperty(name_ + ".user", "pi");
+        password_ = Main.getProperties().getProperty(name_ + ".password", "raspberry");
+        command_ = Main.getProperties().getProperty(name_ + ".command");
         if (user_ != null && remote_ != null && command_ != null) {
             System.out.println("INFO:" + name_ + ": " + user_ + "@" + remote_ + " " + command_);
         }
@@ -113,10 +107,12 @@ public abstract class AbstractSource implements VideoSource {
                                      .charAt(0); // N|S|E|W
         AffineTransform worldToCamera = new AffineTransform();
         worldToCamera.rotate((Math.PI / 180.) * (cameraOrientation == 'E' ? 90. : cameraOrientation == 'S' ? 180. : cameraOrientation == 'W' ? 270. : 0.));
-        double[] cameraPosition = {Double.parseDouble(Main.getProperties()
-                                                          .getProperty(name_ + ".camera-EW-position", "0.0")),
-                Double.parseDouble(Main.getProperties()
-                                       .getProperty(name_ + ".camera-NS-position", "0.0"))};
+        double[] cameraPosition = {
+            Double.parseDouble(Main.getProperties()
+                                   .getProperty(name_ + ".camera-EW-position", "0.0")),
+            Double.parseDouble(Main.getProperties()
+                                   .getProperty(name_ + ".camera-NS-position", "0.0"))
+        };
         worldToCamera.transform(cameraPosition, 0, cameraPosition, 0, 1);
         cameraX_ = cameraPosition[0];
         cameraY_ = cameraPosition[1];
@@ -139,31 +135,12 @@ public abstract class AbstractSource implements VideoSource {
         projection_ = projection;
     }
 
-    /**
-     * Chooses a network address through which the local host may be reached from a given remore host. Many remote
-     * commands require a network address for sending data back to this program. Where the host has multiple network
-     * adapters or addresses, not all may be reachable from the remote. A working address is identified by opening a
-     * temporary DatagramSocket and getting its address on the local end.
-     *
-     * @param remote
-     * @return An address through which the remote host can reach this local host.
-     * @throws SocketException
-     * @throws UnknownHostException
-     */
-    private static String getReturnAddress(String remote) throws SocketException, UnknownHostException {
-        try (final DatagramSocket socket = new DatagramSocket()) {
-            socket.connect(InetAddress.getByName(remote), 10002);
-            return socket.getLocalAddress()
-                         .getHostAddress();
-        }
-    }
-
     @Override
     public SourceProjection getProjection() {
         return projection_;
     }
 
-    private boolean hasRunningStream() {
+    private Optional<Integer> getStreamPid() {
         JSch check = new JSch();
 
         try {
@@ -172,7 +149,12 @@ public abstract class AbstractSource implements VideoSource {
             checkSes.connect();
 
             ChannelExec shell = (ChannelExec) checkSes.openChannel("exec");
-            shell.setCommand("ps -e | grep -Eo '\\s*[0-9]+.*gst-launch-1.0' | sed -E 's/\\s*([0-9]+).*/\\1/'");
+
+            // TODO: Figure out if there's a high probability of command collision
+            shell.setCommand(String.format(
+                "ps -e | grep -Eo '\\s*[0-9]+.*%s' | sed -E 's/\\s*([0-9]+).*/\\1/'",
+                findPidCommand(command_)
+            ));
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             shell.setInputStream(null);
             shell.setOutputStream(out);
@@ -191,14 +173,49 @@ public abstract class AbstractSource implements VideoSource {
             }
 
             LOG.info("Exit code: " + shell.getExitStatus());
-            LOG.info("Shell output:\n" + (out));
 
-            return shell.getExitStatus() == 0;
+            String result = out.toString();
+            LOG.info("Shell output:\n" + result);
+
+            try {
+                return Optional.of(Integer.parseInt(Pattern.compile("([0-9]+)").matcher(result).group(1)));
+            } catch (NumberFormatException ex) { // there was some issue getting the last PID so we won't be able to bind correctly
+            }
         } catch (JSchException e) {
             System.err.println(e);
         }
 
-        return false;
+        return Optional.empty();
+    }
+
+    private boolean hasRunningStream() {
+        lastStreamPid = getStreamPid();
+
+        return lastStreamPid.isPresent();
+    }
+
+    private void runRemoteCommand() {
+        RemoteCommand.newBuilder()
+                     .name(name_)
+                     .user(user_)
+                     .remote(remote_)
+                     .password(password_)
+                     .command(command_)
+                     .timeOut(timeOut)
+                     .lock(execLock_)
+                     .build()
+                     .start();
+    }
+
+    private void bindRemoteCommand() {
+        new RemoteCommandBinding(
+            user_,
+            remote_,
+            new SimpleUser(password_),
+            timeOut,
+            lastStreamPid.orElseThrow(),
+            this::getStreamPid
+        );
     }
 
     public static void main(String[] args) {
@@ -212,7 +229,6 @@ public abstract class AbstractSource implements VideoSource {
 
         LOG.info("Fisheye has running stream: " + ((AbstractSource) sources.get("Fisheye")).hasRunningStream());
 
-
         System.exit(0);
     }
 
@@ -221,106 +237,25 @@ public abstract class AbstractSource implements VideoSource {
      */
     protected void runRemote() { // TODO: configurable timeout/restart logic, etc, etc
 
-        execBaseTime_ = System.currentTimeMillis();
-        (new Thread() {
-            {
-                setDaemon(true);
-            }
-
-            @Override
-            public void run() {
-                try {
-                    JSch jsch = new JSch();
-                    // loop to start or restart remote command
-                    while (true) {
-                        // restart may recreate session or reuse old one depending on whether session_ has been cleared
-                        Session session = session_;
-                        ChannelExec exec = null;
-                        while (session == null) {
-                            System.out.println("INFO:" + name_ + ": SESSION:" + session_ + " " + session + " " + exec_ + " " + exec);
-                            try {
-                                session = jsch.getSession(user_, remote_, 5800); // TODO: configurable port #
-                                session.setUserInfo(new SimpleUser(password_));
-                                session.connect(); // TODO: use timeout?
-                                System.out.println("INFO:" + name_ + ": Started remote session @ " + remote_ + ".");
-                            } catch (Exception ex) {
-                                System.out.println("WARNING:" + name_ + ": Problem starting remote session @ " + remote_ + ".");
-                                ex.printStackTrace(System.out);
-                                session = null;
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (Exception exx) {}
-                            }
-                        }
-                        System.out.println("INFO:" + name_ + ": EXEC:" + session_ + " " + session + " " + exec_ + " " + exec);
-                        session_ = session;
-                        execBaseTime_ = System.currentTimeMillis();
-                        try {
-                            exec = (ChannelExec) session.openChannel("exec");
-                            exec.setCommand(command_.replace("$LOCALHOST", getReturnAddress(remote_)));
-                            exec.setInputStream(null);
-//                            ByteArrayOutputStream out = new ByteArrayOutputStream();
-//                            ByteArrayOutputStream err = new ByteArrayOutputStream();
-                            // exec.setOutputStream(System.err, true);
-                            // exec.setErrStream(System.err, true);
-                            exec.setOutputStream(System.out);
-                            exec.setErrStream(System.out);
-                            exec.connect();
-                            exec_ = exec;
-                            System.out.println("INFO:" + name_ + ": Started remote command " + command_ + ".");
-                            // wait until session_ or exec_ is cleared from outside or finishes
-                            while ((exec_ != null) && (session_ != null) && exec.isConnected() && !exec.isEOF() && !exec.isClosed()) {
-                                synchronized (execLock_) {
-                                    try {
-                                        execLock_.wait(1000);
-                                    } catch (Exception ex) {
-                                        // continue;
-                                    }
-                                }
-                            }
-                            if (!exec.isClosed()) {
-                                exec.sendSignal("KILL");
-                            }
-                            System.out.println("INFO:" + name_ + ": Exited remote command " + command_ + ".");
-//                            System.out.write(out.toByteArray());
-//                            System.out.write(err.toByteArray());
-                            System.out.println("INFO:" + name_ + ": Remote command exit status: " + exec.getExitStatus());
-                            exec.disconnect();
-                            if (session_ == null) {
-                                session.disconnect();
-                            }
-                        } catch (Exception ex) {
-                            System.out.println("WARNING:" + name_ + ": Problem executing remote command @ " + remote_ + ".");
-                            ex.printStackTrace(System.out);
-                            session_ = null;
-                            exec_ = null;
-                            try {
-                                Thread.sleep(1000);
-                            } catch (Exception exx) {
-                            }
-                        }
-                    }
-                } catch (Exception ex) {
-                    System.out.println("SEVERE:" + name_ + ": Problem initializing JSCH for remote command execution @ " + remote_ + ".");
-                    ex.printStackTrace(System.out);
-                }
-            }
-        }).start();
+        timeOut = new TimeOut(TimeUnit.SECONDS.toMillis(30));
+        if(hasRunningStream()) {
+            bindRemoteCommand();
+        } else {
+            runRemoteCommand();
+        }
 
         timer_.schedule(new TimerTask() {
             @Override
             public void run() {
-                long time = System.currentTimeMillis() - execBaseTime_;
-                //if ( (time > (6 * 1000)) && (exec_ != null) ) {
-                if ((time > (30 * 1000)) && (exec_ != null)) {
-                    System.out.println("WARNING:" + name_ + ": Frame update timeout (" + (time / 1000) + " sec) @ " + remote_ + ".");
-                    exec_ = null;
+                if (timeOut.hasTimedOut() && (exec_.get() != null)) {
+                    System.out.println("WARNING:" + name_ + ": Frame update timeout (" + timeOut.lastDiff(TimeUnit.SECONDS) + " sec) @ " + remote_ + ".");
+                    exec_.set(null);
                     synchronized (execLock_) {
                         execLock_.notifyAll();
                     }
                 }
             }
-        }, 10 * 1000, 1 * 1000);
+        }, TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(1));
     }
 
     @Override
@@ -423,47 +358,29 @@ public abstract class AbstractSource implements VideoSource {
         }
     }
 
-    private static final class SimpleUser implements UserInfo {
-        private final String phrase, word;
+    /**
+     * Splits the given command ({@code within}) into it's constituent parts very loosely to try and determine which command
+     * would show up in a unix command {@code ps -e} list.
+     * <br />
+     * EX. The expected return for
+     * {@code killall raspivid; sleep 1s; raspivid -md 1 -w 768 -h 540 -t 0 -fps 20 -roi .1,0,.8,1 -b 750000 -o - |
+     * gst-launch-1.0 -v fdsrc ! h264parse ! queue max-size-time=100000000 leaky=2 ! rtph264pay config-interval=-1 !
+     * udpsink host=$LOCALHOST port=5801}
+     *  would be the {@link String} {@code gst-launch-1.0}
+     * @param within the overall command that will be run
+     * @throws IllegalArgumentException if within cannot be parsed into ANY command
+     */
+    private static String findPidCommand(String within) {
+        String[] individualCommands = within.split("[;|]");
+        String[] lastCommandAndArgs = individualCommands[individualCommands.length - 1].split("[\\s]+");
 
-        public SimpleUser(String passwordAndPhrase) {
-            this(passwordAndPhrase, passwordAndPhrase);
+        for(String com : lastCommandAndArgs) {
+            if(com.length() != 0) {
+                return com;
+            }
         }
 
-        public SimpleUser(String password, String passphrase) {
-            this.phrase = passphrase;
-            this.word = password;
-        }
-
-        @Override
-        public String getPassphrase() {
-            return phrase;
-        }
-
-        @Override
-        public String getPassword() {
-            return word;
-        }
-
-        @Override
-        public boolean promptPassword(String message) {
-            return true;
-        }
-
-        @Override
-        public boolean promptPassphrase(String message) {
-            return true;
-        }
-
-        @Override
-        public boolean promptYesNo(String message) {
-            return true;
-        }
-
-        @Override
-        public void showMessage(String message) {
-
-        }
+        throw new IllegalArgumentException("No command was found within given command: \"" + within + "\"");
     }
 
 } // AbstractSource
