@@ -33,7 +33,7 @@ public class Main {
 
     public static final Logger logger_ = Logger.getLogger(Main.class.getName());
 
-    protected static Properties properties_;
+    public static Properties properties_;
 
     protected static ByteOrder byteOrder_;
 
@@ -127,7 +127,7 @@ public class Main {
         byteOrder_ = "BE".equalsIgnoreCase(bo) ? ByteOrder.BIG_ENDIAN : "LE".equalsIgnoreCase(bo) ? ByteOrder.LITTLE_ENDIAN : ByteOrder.nativeOrder();
         // TODO: check BufferedImage byte order
 
-        initSources();
+        initSources(properties_, sources_);
 
         initViews();
 
@@ -153,20 +153,19 @@ public class Main {
         });
     }
 
-    private static void initSources() {
-
+    public static void initSources(Properties properties, Map<String, VideoSource> sources) {
         // input video sources
         for (int i = 0; ; i++) {
-            String name = properties_.getProperty("video" + i);
+            String name = properties.getProperty("video" + i);
             if (name == null) {
                 break;
             }
             try {
-                Class<?> sourceClass = Class.forName(properties_.getProperty(
+                Class<?> sourceClass = Class.forName(properties.getProperty(
                         name + ".class",
                         GstreamerSource.class.getName()
                 ));
-                sources_.put(
+                sources.put(
                         name,
                         (VideoSource) sourceClass.getDeclaredConstructor(String.class)
                                                  .newInstance(name)
@@ -175,7 +174,7 @@ public class Main {
                 logger_.log(Level.WARNING, "Video source " + name + " initialization failed.", ex);
             }
         }
-        if (sources_.isEmpty()) {
+        if (sources.isEmpty()) {
             logger_.log(Level.SEVERE, "No valid video sources loaded, exiting.");
             System.exit(1);
         }
