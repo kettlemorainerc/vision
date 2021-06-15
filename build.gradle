@@ -33,7 +33,7 @@ repositories {
 def targetConfiguration = "aimingFEThree2020";
 targetCompatibility = (JavaVersion.VERSION_11)
 sourceCompatibility = (JavaVersion.VERSION_11)
-def extractDir = "$buildDir${File.separator}tmp${File.separator}jniExtractDir"
+def extractDir = "$buildDir${File.separator}tmp${File.separator}natives"
 
 task copyVideoData(type: Copy) {
     from("VIDEO_DATA") {
@@ -48,55 +48,44 @@ task saveVideoData(type: Copy) {
     }
     into "VIDEO_DATA"
 }
-// all execs must copy, then save video data, must have a workingDir of the *.so/a s and use targetConfiguration as their args to main
-tasks.withType(JavaExec) {
-    dependsOn tasks.copyVideoData
-    finalizedBy(tasks.saveVideoData)
-    workingDir "${extractDir}"
-    argsString(targetConfiguration)
-    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}${extractDir}"
-}
 
 configurations {
-    staticNative
+    natives
 }
 
 dependencies {
-    implementation wpi.deps.wpilib()
-    nativeZip wpi.deps.wpilibJni(wpi.platforms.roborio)
-    nativeDesktopZip wpi.deps.wpilibJni(wpi.platforms.desktop)
-
-    implementation wpi.deps.vendor.java()
-    nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
-    nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
-
     implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
     implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-core', version: '1.4.0'
     implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-swing', version: '0.9.0'
-//    implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
-    implementation group: 'org.openpnp', name: 'opencv', version: '3.2.0-1'
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
 
-    implementation group: 'edu.wpi.first.ntcore', name: 'ntcore-java', version: wpiVersion
-    implementation group: 'edu.wpi.first.ntcore', name: 'ntcore-jni', version: wpiVersion
-    implementation group: 'edu.wpi.first.wpiutil', name: 'wpiutil-java', version: wpiVersion
-    implementation group: 'edu.wpi.first.wpiutil', name: 'wpiutil-jni', version: wpiVersion
+    // You can (maybe?) figure out the format for the following deps from this url: https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/
+    implementation group: 'edu.wpi.first.wpilibj', name: 'wpilibj-java', version: wpiVersion
 
-    staticNative group: 'edu.wpi.first.wpiutil', name: 'wpiutil-cpp', version: wpiVersion, classifier: "${platform}x86-64static", ext: 'zip'
-    staticNative group: 'edu.wpi.first.ntcore', name: 'ntcore-cpp', version: wpiVersion, classifier: "${platform}x86-64static", ext: 'zip'
+    def javaAndNatives = { String target, String packageName = target, String version = wpiVersion ->
+        implementation group: "edu.wpi.first.${packageName}", name: "$target-java", version: version
+        natives group: "edu.wpi.first.${packageName}", name: "$target-jni", version: version, classifier: "${platform}x86-64"
+        natives group: "edu.wpi.first.${packageName}", name: "$target-cpp", version: version, classifier: "${platform}x86-64static", ext: "zip"
+    }
+
+    javaAndNatives "ntcore"
+    javaAndNatives "wpiutil"
+    javaAndNatives "opencv", "thirdparty.frc${opencvYear}.opencv", opencvVersion
 }
 
-def staticNativeFiles = {
-    def config = configurations.getByName("staticNative")
+// Retrieve all deps from the 'natives' configuration we created earlier in the 'configurations' closure
+def nativesFiles = {
+    def config = configurations.getByName("natives")
     def deps = config.dependencies.toArray(new Dependency[0])
     config.files(deps)
 }
-
-task extractArchivedNatives(type: Copy) {
-    staticNativeFiles().each {
+// Map the downloaded 'natives' deps to their native files, and flat map them into a directory
+task extractNatives(type: Copy) {
+    nativesFiles().each {
         from zipTree(it)
     }
     include '**/*.a'
+    include "**/*.so"
     eachFile {
         path = name
     }
@@ -104,23 +93,25 @@ task extractArchivedNatives(type: Copy) {
 
     into extractDir
 }
-
-run {
-    dependsOn tasks.extractArchivedNatives
-    dependsOn tasks.build
+/**
+ * Executions of this application need to do a few things
+ * <ul>
+ *     <li>Extract necessary native libraries to defined extraction directory</li>
+ *     <li>Add the previously reference extraction directory to java.library.path so that runtime can see the natives</li>
+ *     <li>Use our currently defined targetConfiguration for vision. see src/main/resources/<targetConfiguration>.properties</li>
+ * </ul>
+ */
+tasks.withType(JavaExec) {
+    dependsOn tasks.extractNatives
     systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}${extractDir}"
 
-    classpath = sourceSets.main.runtimeClasspath
+    argsString(targetConfiguration)
+}
+
+run {
     main = "org.usfirst.frc.team2077.video.Main"
 }
-/*
-    nativeDesktopZip uri("https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/wpiutil/wpiutil-cpp/${wpiVersion}/wpiutil-cpp-${wpiVersion}-${platform}x86-64static.zip")
-    nativeDesktopZip uri("https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/ntcore/ntcore-cpp/${wpiVersion}/ntcore-cpp-${wpiVersion}-${platform}x86-64static.zip" )
-* */
 
 task startNetwork(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
     main = "org.usfirst.frc.team2077.vision.NTMain"
-
-    dependsOn(tasks.build)
 }
