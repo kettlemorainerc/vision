@@ -8,3 +8,14 @@ In order to start you will want to run the `run` task. It should set everything 
 should be under the "application" tasks group in the IntelliJ Gradle menu.
 
 Otherwise you can run the terminal commands. Depending on the terminal either `./gradlew run` or `gradlew run` should work.
+
+## Dep Jars
+
+Various external dependencies may need to be pulled from the following locations
+
+https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/ntcore/ntcore-java
+
+https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/ntcore/ntcore-jni
+
+https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/wpiutil/wpiutil-java
+

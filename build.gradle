@@ -3,7 +3,26 @@ import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 plugins {
     id 'java'
     id 'application'
-    id "edu.wpi.first.GradleRIO" version "2020.3.2"
+    id "edu.wpi.first.GradleRIO" version "${wpiVersion}" // WPI version comes from gradle.properties
+}
+
+def platform = DefaultNativePlatform.currentOperatingSystem.toFamilyName()
+
+MavenArtifactRepository map = maven {url ""}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {url 'http://maven.icm.edu.pl/artifactory/repo/'}
+    maven {url 'https://frcmaven.wpi.edu/artifactory/release/'}
+    maven {
+        url "https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/wpiutil/wpiutil-cpp/${wpiVersion}/wpiutil-cpp-${wpiVersion}-${platform}x86-64static.zip"
+
+    }
+    ivy {
+        url "https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/wpiutil/wpiutil-cpp/${wpiVersion}/wpiutil-cpp-${wpiVersion}-${platform}x86-64static.zip"
+
+    }
 }
 
 //jar {
@@ -14,46 +33,61 @@ plugins {
 def targetConfiguration = "aimingFEThree2020";
 targetCompatibility = (JavaVersion.VERSION_11)
 sourceCompatibility = (JavaVersion.VERSION_11)
+def extractDir = '$buildDir${File.separator}tmp${File.separator}jniExtractDir'
 
 task copyVideoData(type: Copy) {
     from("VIDEO_DATA") {
         include "*"
     }
-    into "$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA"
+    into "${extractDir}${File.separator}VIDEO_DATA"
 }
 
 task saveVideoData(type: Copy) {
-    from("$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA") {
+    from("${extractDir}${File.separator}VIDEO_DATA") {
         include '*'
     }
     into "VIDEO_DATA"
 }
 
+def getNativeDesktopArchivedDeps = { ->
+    nativeDesktopZip uri("https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/wpiutil/wpiutil-cpp/${wpiVersion}/wpiutil-cpp-${wpiVersion}-${platform}x86-64static.zip")
+    nativeDesktopZip uri("https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/ntcore/ntcore-cpp/${wpiVersion}/ntcore-cpp-${wpiVersion}-${platform}x86-64static.zip" )
+    def stuff = configurations.getByName("nativeDesktopZip")
+    def deps = stuff.dependencies
+
+    def collection = files();
+    deps.matching {it -> (it != null && stuff.files(it).size() > 0)}
+            .all {collection += files(stuff.files(it))}
+
+    return collection
+}
+
+task extractArchiveDeps(type: Copy) {
+    from getNativeDesktopArchivedDeps
+    rename java.util.regex.Pattern.compile("(.*${File.separator})(.*\\.a)"), "\$2"
+    into extractDir
+
+
+}
+
 tasks.withType(JavaExec) {
     dependsOn tasks.copyVideoData
     finalizedBy(tasks.saveVideoData)
-    workingDir "$buildDir${File.separator}tmp${File.separator}jniExtractDir"
+    workingDir "${extractDir}"
     argsString(targetConfiguration)
-    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
-}
-
-repositories {
-    mavenCentral()
-    jcenter()
-    mavenLocal()
-    maven {
-        url 'http://maven.icm.edu.pl/artifactory/repo/'
-    }
+    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}${extractDir}"
 }
 
 run {
-    dependsOn tasks.extractTestJNI
+    dependsOn tasks.extractArchiveDeps
     dependsOn tasks.build
-    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
+    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}${extractDir}"
 
     classpath = sourceSets.main.runtimeClasspath
     main = "org.usfirst.frc.team2077.video.Main"
 }
+
+logger.lifecycle(platform);
 
 dependencies {
     implementation wpi.deps.wpilib()
@@ -69,14 +103,11 @@ dependencies {
     implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-swing', version: '0.9.0'
     implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
-    implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
 
-    if(DefaultNativePlatform.currentOperatingSystem.linux) {
-        implementation files("network-tables${File.separator}ntcore-java-4.0.0.jar")
-        implementation files("network-tables${File.separator}ntcore-jni-4.0.0-all.jar")
-        implementation files("network-tables${File.separator}wpiutil-java-3.0.0.jar")
-    }
-
+    implementation group: 'edu.wpi.first.ntcore', name: 'ntcore-java', version: wpiVersion
+    implementation group: 'edu.wpi.first.ntcore', name: 'ntcore-jni', version: wpiVersion
+    implementation group: 'edu.wpi.first.wpiutil', name: 'wpiutil-java', version: wpiVersion
+    implementation group: 'edu.wpi.first.wpiutil', name: 'wpiutil-jni', version: wpiVersion
 }
 
 task startNetwork(type: JavaExec) {
