@@ -49,8 +49,7 @@ import org.usfirst.frc.team2077.vvcommon.Utilities;
 public class Main {
 
     static {
-        new OpenCVNativeLoader().init();
-//        System.loadLibrary( Core.NATIVE_LIBRARY_NAME );
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
     protected static final Logger logger_ = Logger.getLogger(Main.class.getName());

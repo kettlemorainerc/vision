@@ -4,12 +4,16 @@ import com.jcraft.jsch.*;
 
 import java.net.*;
 import java.util.concurrent.atomic.*;
+import java.util.logging.*;
+import java.util.logging.Logger;
 
 public class RemoteCommand extends Thread {
+    private static Logger LOG = Logger.getLogger("remote-command");
 //    private AbstractSource
     private Session session_;
     private AtomicReference<ChannelExec> exec_;
     private final String name_, user_, remote_, password_, command_;
+    private final int port;
     private final TimeOut timeOut;
     private final Object execLock_;
 
@@ -21,6 +25,7 @@ public class RemoteCommand extends Thread {
         String name_,
         String user_,
         String remote_,
+        int port,
         String password_,
         String command_,
         AtomicReference<ChannelExec> exec_,
@@ -30,6 +35,7 @@ public class RemoteCommand extends Thread {
         this.name_ = name_;
         this.user_ = user_;
         this.remote_ = remote_;
+        this.port = port;
         this.password_ = password_;
         this.command_ = command_;
         this.timeOut = timeOut;
@@ -45,7 +51,7 @@ public class RemoteCommand extends Thread {
         while (session == null) {
             System.out.println("INFO:" + name_ + ": SESSION:" + session_ + " " + session + " " + exec_ + " ");
             try {
-                session = jsch.getSession(user_, remote_, 5800); // TODO: configurable port #
+                session = jsch.getSession(user_, remote_, port); // TODO: configurable port #
                 session.setUserInfo(new SimpleUser(password_));
                 session.connect(); // TODO: use timeout?
                 System.out.println("INFO:" + name_ + ": Started remote session @ " + remote_ + ".");
@@ -110,10 +116,12 @@ public class RemoteCommand extends Thread {
                         session.disconnect();
                     }
                 } catch (Exception ex) {
-                    System.out.println("WARNING:" + name_ + ": Problem executing remote command @ " + remote_ + ".");
-                    ex.printStackTrace(System.out);
+                    LogRecord rec = new LogRecord(Level.WARNING, String.format("%s: Problem executing remote command @ %s", name_, remote_));
+                    rec.setThrown(ex);
+                    LOG.log(rec);
+
                     session_ = null;
-                    exec_ = null;
+                    exec_.set(null);
                     try {
                         Thread.sleep(1000);
                     } catch (Exception exx) {
@@ -127,7 +135,7 @@ public class RemoteCommand extends Thread {
     }
 
     /**
-     * Chooses a network address through which the local host may be reached from a given remore host. Many remote
+     * Chooses a network address through which the local host may be reached from a given remote host. Many remote
      * commands require a network address for sending data back to this program. Where the host has multiple network
      * adapters or addresses, not all may be reachable from the remote. A working address is identified by opening a
      * temporary DatagramSocket and getting its address on the local end.
@@ -150,6 +158,7 @@ public class RemoteCommand extends Thread {
         private TimeOut timeOut;
         private AtomicReference<ChannelExec> exec;
         private Object lock;
+        private int port;
 
         public Builder exec(AtomicReference<ChannelExec> val) {
             exec = val;
@@ -191,11 +200,17 @@ public class RemoteCommand extends Thread {
             return this;
         }
 
+        public Builder port(int val) {
+            port = val;
+            return this;
+        }
+
         public RemoteCommand build() {
             return new RemoteCommand(
               name,
               user,
               remote,
+              port,
               password,
               command,
               exec,

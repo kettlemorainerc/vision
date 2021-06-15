@@ -67,6 +67,7 @@ public abstract class AbstractSource implements VideoSource {
     public final double cameraY_;
     public final double cameraZ_;
     protected final String name_, remote_, user_, password_, command_;
+    protected final int port;
     // camera transform
     protected final SourceProjection projection_;
     protected final Map<String, int[]> viewMap_ = new LinkedHashMap<>();
@@ -95,6 +96,7 @@ public abstract class AbstractSource implements VideoSource {
         remote_ = Main.getProperties().getProperty(name_ + ".remote");
         user_ = Main.getProperties().getProperty(name_ + ".user", "pi");
         password_ = Main.getProperties().getProperty(name_ + ".password", "raspberry");
+        port = Integer.parseInt(Main.getProperties().getProperty(name_ + ".port", "5800"), 10);
         command_ = Main.getProperties().getProperty(name_ + ".command");
         if (user_ != null && remote_ != null && command_ != null) {
             System.out.println("INFO:" + name_ + ": " + user_ + "@" + remote_ + " " + command_);
@@ -179,7 +181,7 @@ public abstract class AbstractSource implements VideoSource {
 
             try {
                 return Optional.of(Integer.parseInt(Pattern.compile("([0-9]+)").matcher(result).group(1)));
-            } catch (NumberFormatException ex) { // there was some issue getting the last PID so we won't be able to bind correctly
+            } catch (NumberFormatException | IllegalStateException ex) { // there was some issue getting the last PID so we won't be able to bind correctly
             }
         } catch (JSchException e) {
             System.err.println(e);
@@ -203,6 +205,8 @@ public abstract class AbstractSource implements VideoSource {
                      .command(command_)
                      .timeOut(timeOut)
                      .lock(execLock_)
+                     .port(port)
+                     .exec(exec_)
                      .build()
                      .start();
     }
@@ -376,6 +380,7 @@ public abstract class AbstractSource implements VideoSource {
 
         for(String com : lastCommandAndArgs) {
             if(com.length() != 0) {
+                LOG.info("Using pid command: " + com);
                 return com;
             }
         }
