@@ -72,7 +72,7 @@ public abstract class AbstractSource implements VideoSource {
     protected final Map<String, int[]> viewMap_ = new LinkedHashMap<>();
     protected Dimension resolution_ = null;
     protected Set<RenderedView> views_ = new HashSet<>();
-    TimeOut timeOut;
+    protected TimeOut timeOut;
     AtomicReference<ChannelExec> exec_ = new AtomicReference<>();
     final Object execLock_ = new Object() {
     };

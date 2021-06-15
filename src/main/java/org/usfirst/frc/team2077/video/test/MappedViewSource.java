@@ -129,7 +129,8 @@ public final class MappedViewSource extends AbstractSource implements VideoSourc
 
         Main.getFrameCounter().getAndIncrement();
 
-        execBaseTime_ = System.currentTimeMillis();
+        timeOut.reset();
+//        execBaseTime_ = System.currentTimeMillis();
 
         if ( resolution_ == null ) {
             resolution_ = new Dimension( image.getWidth(), image.getHeight() );

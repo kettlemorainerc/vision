@@ -178,7 +178,8 @@ public final class GstreamerSource extends AbstractSource implements VideoSource
 
         Main.getFrameCounter().getAndIncrement();
 
-        execBaseTime_ = System.currentTimeMillis();
+        timeOut.reset();
+//        execBaseTime_ = System.currentTimeMillis();
 
         if (resolution_ == null) {
             Structure capsStruct = sample.getCaps().getStructure(0);

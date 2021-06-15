@@ -117,7 +117,8 @@ public final class GIFImageSource extends AbstractSource implements VideoSource 
 
         Main.getFrameCounter().getAndIncrement();
 
-        execBaseTime_ = System.currentTimeMillis();
+        timeOut.reset();
+//        execBaseTime_ = System.currentTimeMillis();
 
         if ( resolution_ == null ) {
             resolution_ = new Dimension( image.getWidth(), image.getHeight() );
