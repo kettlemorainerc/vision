@@ -7,8 +7,10 @@ import java.util.concurrent.atomic.*;
 import java.util.logging.*;
 import java.util.logging.Logger;
 
+import static org.usfirst.frc.team2077.logging.FormatFormatter.*;
+
 public class RemoteCommand extends Thread {
-    private static Logger LOG = Logger.getLogger("remote-command");
+    private static Logger LOG = getLogger();
 //    private AbstractSource
     private Session session_;
     private AtomicReference<ChannelExec> exec_;

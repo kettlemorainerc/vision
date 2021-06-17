@@ -45,6 +45,8 @@ import org.opencv.osgi.*;
 import org.usfirst.frc.team2077.vvcommon.MappedFrameInfo;
 import org.usfirst.frc.team2077.vvcommon.Utilities;
 
+import static org.usfirst.frc.team2077.logging.FormatFormatter.*;
+
 
 public class Main {
 
@@ -52,7 +54,7 @@ public class Main {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
-    protected static final Logger logger_ = Logger.getLogger(Main.class.getName());
+    protected static final Logger logger_ = getLogger();
 
     protected static JFrame visionFrame_;
     protected static Properties properties_;

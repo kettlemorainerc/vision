@@ -1,5 +1,6 @@
 package org.usfirst.frc.team2077.video;
 
+import org.usfirst.frc.team2077.logging.*;
 import org.usfirst.frc.team2077.video.core.*;
 import org.usfirst.frc.team2077.video.interfaces.*;
 import org.usfirst.frc.team2077.video.sources.*;
@@ -16,6 +17,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.logging.*;
+import java.util.logging.Formatter;
+
+import static org.usfirst.frc.team2077.logging.FormatFormatter.*;
 
 /**
  * Main class to read configuration. construct sources, views, and renderings, and start the video.
@@ -31,7 +35,7 @@ import java.util.logging.*;
  */
 public class Main {
 
-    public static final Logger logger_ = Logger.getLogger(Main.class.getName());
+    public static final Logger logger_ = getLogger();
 
     public static Properties properties_;
 
@@ -51,7 +55,6 @@ public class Main {
      *             file path or a resource name where "resources/" + name + ".properties" is in java.class.path.
      */
     public static void main(String[] args) {
-
         init(args);
 
         networkTables = new Thread(() -> {

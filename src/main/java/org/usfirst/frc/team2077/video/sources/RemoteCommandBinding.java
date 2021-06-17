@@ -10,9 +10,10 @@ import java.util.logging.Logger;
 
 import static java.util.concurrent.TimeUnit.*;
 import static java.util.logging.Level.*;
+import static org.usfirst.frc.team2077.logging.FormatFormatter.*;
 
 public class RemoteCommandBinding extends Thread {
-    private static final java.util.logging.Logger LOG = Logger.getLogger(RemoteCommandBinding.class.getName());
+    private static final java.util.logging.Logger LOG = getLogger();
 
     private final String user, host;
     private String exec;

@@ -1,6 +1,7 @@
 package org.usfirst.frc.team2077.video.sources;
 
 import com.jcraft.jsch.*;
+import org.usfirst.frc.team2077.logging.*;
 import org.usfirst.frc.team2077.video.*;
 import org.usfirst.frc.team2077.video.interfaces.*;
 import org.usfirst.frc.team2077.video.projections.*;
@@ -10,6 +11,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.io.*;
 import java.nio.*;
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -18,6 +20,7 @@ import java.util.logging.*;
 import java.util.regex.*;
 
 import static java.util.logging.Level.*;
+import static org.usfirst.frc.team2077.logging.FormatFormatter.*;
 
 /**
  * Base {@link VideoSource} implementation. Includes code to execute a startup command on a remote host as a part of the
@@ -58,8 +61,7 @@ import static java.util.logging.Level.*;
  * @author R. A. Buchanan
  */
 public abstract class AbstractSource implements VideoSource {
-
-    private static final Logger LOG = Logger.getGlobal();
+    private static final Logger LOG = getLogger();
 
     protected static final java.util.Timer timer_ = new Timer();
     // camera placement // TODO: remove
@@ -131,8 +133,10 @@ public abstract class AbstractSource implements VideoSource {
             projection = (SourceProjection) projectionClass.getDeclaredConstructor(String.class, VideoSource.class)
                                                            .newInstance(name_, this);
         } catch (Exception ex) {
-            System.out.println("SEVERE:" + "Camera projection initialization failed.");
-            ex.printStackTrace(System.out);
+            LogRecord message = new LogRecord(SEVERE, "Camera projection initialization failed");
+            message.setThrown(ex);
+            LOG.log(message);
+
         }
         projection_ = projection;
     }
@@ -176,12 +180,20 @@ public abstract class AbstractSource implements VideoSource {
 
             LOG.info("Exit code: " + shell.getExitStatus());
 
-            String result = out.toString();
-            LOG.info("Shell output:\n" + result);
+//            LOG.info("Shell output:\n" + result);
 
+            String result = out.toString();
             try {
-                return Optional.of(Integer.parseInt(Pattern.compile("([0-9]+)").matcher(result).group(1)));
+                Matcher thing = Pattern.compile("[0-9]+").matcher(result);
+                Optional<Integer> pid = thing.results().findFirst().map(MatchResult::group).map(Integer::parseInt);
+                if(pid.isPresent()) {
+                    LOG.info("Found pid [" + pid + "] within result: " + result);
+                    return pid;
+                }
             } catch (NumberFormatException | IllegalStateException ex) { // there was some issue getting the last PID so we won't be able to bind correctly
+                LogRecord rec = new LogRecord(INFO, "Failed to find pid within: " + result);
+                rec.setThrown(ex);
+                LOG.log(rec);
             }
         } catch (JSchException e) {
             System.err.println(e);
@@ -197,18 +209,18 @@ public abstract class AbstractSource implements VideoSource {
     }
 
     private void runRemoteCommand() {
-        RemoteCommand.newBuilder()
-                     .name(name_)
-                     .user(user_)
-                     .remote(remote_)
-                     .password(password_)
-                     .command(command_)
-                     .timeOut(timeOut)
-                     .lock(execLock_)
-                     .port(port)
-                     .exec(exec_)
-                     .build()
-                     .start();
+//        RemoteCommand.newBuilder()
+//                     .name(name_)
+//                     .user(user_)
+//                     .remote(remote_)
+//                     .password(password_)
+//                     .command(command_)
+//                     .timeOut(timeOut)
+//                     .lock(execLock_)
+//                     .port(port)
+//                     .exec(exec_)
+//                     .build()
+//                     .start();
     }
 
     private void bindRemoteCommand() {
@@ -241,7 +253,7 @@ public abstract class AbstractSource implements VideoSource {
      */
     protected void runRemote() { // TODO: configurable timeout/restart logic, etc, etc
 
-        timeOut = new TimeOut(TimeUnit.SECONDS.toMillis(30));
+        timeOut = new TimeOut(Duration.ofSeconds(30));
         if(hasRunningStream()) {
             bindRemoteCommand();
         } else {
@@ -252,7 +264,7 @@ public abstract class AbstractSource implements VideoSource {
             @Override
             public void run() {
                 if (timeOut.hasTimedOut() && (exec_.get() != null)) {
-                    System.out.println("WARNING:" + name_ + ": Frame update timeout (" + timeOut.lastDiff(TimeUnit.SECONDS) + " sec) @ " + remote_ + ".");
+                    LOG.warning(() -> "Frame Update Timeout (" + timeOut.lastDiff(TimeUnit.SECONDS) + " sec) @ " + remote_);
                     exec_.set(null);
                     synchronized (execLock_) {
                         execLock_.notifyAll();

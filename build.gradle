@@ -15,16 +15,9 @@ repositories {
     mavenLocal()
     maven {url 'http://maven.icm.edu.pl/artifactory/repo/'}
     maven {url 'https://frcmaven.wpi.edu/artifactory/release/'}
-//    maven {
-//        url "https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/wpiutil/wpiutil-cpp/${wpiVersion}/wpiutil-cpp-${wpiVersion}-${platform}x86-64static.zip"
-//
-//    }
-//    ivy {
-//        url "https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/wpiutil/wpiutil-cpp/${wpiVersion}/wpiutil-cpp-${wpiVersion}-${platform}x86-64static.zip"
-//
-//    }
 }
 
+// I'm leaving this here in case we for some reason want to run this as a jar somewhere. They'll still need a bunch of the natives
 //jar {
 //    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
 //    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest("org.usfirst.frc.team2077.video.Main")

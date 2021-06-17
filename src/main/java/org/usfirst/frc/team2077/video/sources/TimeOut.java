@@ -1,13 +1,14 @@
 package org.usfirst.frc.team2077.video.sources;
 
+import java.time.*;
 import java.util.concurrent.*;
 
 public class TimeOut {
     private long from = System.currentTimeMillis();
-    private final long after;
+    private final Duration after;
     private long lastDiff;
 
-    public TimeOut(long after) {
+    public TimeOut(Duration after) {
         this.after = after;
     }
 
@@ -17,7 +18,7 @@ public class TimeOut {
 
     public boolean hasTimedOut() {
         lastDiff = from - System.currentTimeMillis();
-        return lastDiff > after;
+        return Duration.ofMillis(lastDiff).compareTo(after) < 0;
     }
 
     public long lastDiff() {
