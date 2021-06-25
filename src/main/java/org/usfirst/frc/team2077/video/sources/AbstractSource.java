@@ -64,6 +64,12 @@ public abstract class AbstractSource implements VideoSource {
     private static final Logger LOG = getLogger();
 
     protected static final java.util.Timer timer_ = new Timer();
+    private final TimerTask runRemote = new TimerTask() {
+        @Override
+        public void run() {
+            runRemote();
+        }
+    };
     // camera placement // TODO: remove
     public final double cameraX_;
     public final double cameraY_;
@@ -146,95 +152,111 @@ public abstract class AbstractSource implements VideoSource {
         return projection_;
     }
 
-    private Optional<Integer> getStreamPid() {
+    private Optional<Integer> getStreamPid() throws JSchException {
         JSch check = new JSch();
 
-        try {
-            Session checkSes = check.getSession(user_, remote_);
-            checkSes.setUserInfo(new SimpleUser(password_));
-            checkSes.connect();
+        Session checkSes = check.getSession(user_, remote_);
+        checkSes.setUserInfo(new SimpleUser(password_));
+        checkSes.connect();
 
-            ChannelExec shell = (ChannelExec) checkSes.openChannel("exec");
+        ChannelExec shell = (ChannelExec) checkSes.openChannel("exec");
 
-            // TODO: Figure out if there's a high probability of command collision
-            shell.setCommand(String.format(
-                "ps -e | grep -Eo '\\s*[0-9]+.*%s' | sed -E 's/\\s*([0-9]+).*/\\1/'",
-                findPidCommand(command_)
-            ));
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            shell.setInputStream(null);
-            shell.setOutputStream(out);
-            shell.setErrStream(out);
+        // TODO: Figure out if there's a high probability of command collision
+        shell.setCommand(String.format(
+            "ps -e | grep -Eo '\\s*[0-9]+.*%s' | sed -E 's/\\s*([0-9]+).*/\\1/'",
+            findPidCommand(command_)
+        ));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        shell.setInputStream(null);
+        shell.setOutputStream(out);
+        shell.setErrStream(out);
 
-            shell.connect();
+        shell.connect();
 
-            while (shell.isConnected() && shell.getExitStatus() == -1 && !shell.isEOF() && !shell.isClosed()) {
-                LOG.info("Checking for gst-launch-1.0: " + out);
-                try { TimeUnit.MILLISECONDS.sleep(200); }
-                catch (InterruptedException e) {
-                    LogRecord rec = new LogRecord(SEVERE, "Failed to wait for existing stream check.");
-                    rec.setThrown(e);
-                    LOG.log(rec);
-                }
+        while (shell.isConnected() && shell.getExitStatus() == -1 && !shell.isEOF() && !shell.isClosed()) {
+            LOG.info("Checking for gst-launch-1.0: " + out);
+            try { TimeUnit.MILLISECONDS.sleep(200); }
+            catch (InterruptedException e) {
+                LogRecord rec = new LogRecord(SEVERE, "Failed to wait for existing stream check.");
+                rec.setThrown(e);
+                LOG.log(rec);
             }
+        }
 
-            LOG.info("Exit code: " + shell.getExitStatus());
+        LOG.info("Exit code: " + shell.getExitStatus());
 
 //            LOG.info("Shell output:\n" + result);
 
-            String result = out.toString();
-            try {
-                Matcher thing = Pattern.compile("[0-9]+").matcher(result);
-                Optional<Integer> pid = thing.results().findFirst().map(MatchResult::group).map(Integer::parseInt);
-                if(pid.isPresent()) {
-                    LOG.info("Found pid [" + pid + "] within result: " + result);
-                    return pid;
-                }
-            } catch (NumberFormatException | IllegalStateException ex) { // there was some issue getting the last PID so we won't be able to bind correctly
-                LogRecord rec = new LogRecord(INFO, "Failed to find pid within: " + result);
-                rec.setThrown(ex);
-                LOG.log(rec);
+        String result = out.toString();
+        try {
+            Matcher thing = Pattern.compile("[0-9]+").matcher(result);
+            Optional<Integer> pid = thing.results().findFirst().map(MatchResult::group).map(Integer::parseInt);
+            if(pid.isPresent()) {
+                LOG.info("Found pid [" + pid + "] within result: " + result);
+                return pid;
             }
-        } catch (JSchException e) {
-            System.err.println(e);
+        } catch (NumberFormatException | IllegalStateException ex) { // there was some issue getting the last PID so we won't be able to bind correctly
+            LogRecord rec = new LogRecord(INFO, "Failed to find pid within: " + result);
+            rec.setThrown(ex);
+            LOG.log(rec);
         }
 
         return Optional.empty();
     }
 
-    private boolean hasRunningStream() {
+    protected boolean hasRunningStream() throws JSchException {
         lastStreamPid = getStreamPid();
 
         return lastStreamPid.isPresent();
     }
 
+    /**
+     * What to do when {@link AbstractSource#hasRunningStream()} returns true.
+     *
+     * By default it starts a thread that runs, and restarts when necessary, {@link AbstractSource#command_} on {@link AbstractSource#remote_}
+     */
     private void runRemoteCommand() {
-//        RemoteCommand.newBuilder()
-//                     .name(name_)
-//                     .user(user_)
-//                     .remote(remote_)
-//                     .password(password_)
-//                     .command(command_)
-//                     .timeOut(timeOut)
-//                     .lock(execLock_)
-//                     .port(port)
-//                     .exec(exec_)
-//                     .build()
-//                     .start();
+        RemoteCommand.newBuilder()
+                     .name(name_)
+                     .user(user_)
+                     .remote(remote_)
+                     .password(password_)
+                     .command(command_)
+                     .timeOut(timeOut)
+                     .lock(execLock_)
+                     .port(port)
+                     .exec(exec_)
+                     .build()
+                     .start();
     }
 
-    private void bindRemoteCommand() {
+    private Optional<Integer> safeGetStreamPid() {
+        try {
+            return getStreamPid();
+        } catch(JSchException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * What should be run in the case that {@link AbstractSource#command_} is already running on
+     * {@link AbstractSource#remote_}.
+     *
+     * By default it just {@code sleep infinite}s within {@link AbstractSource#remote_} until the found running
+     * {@link AbstractSource#command_} is terminated.
+     */
+    protected void bindRemoteCommand() {
         new RemoteCommandBinding(
             user_,
             remote_,
             new SimpleUser(password_),
             timeOut,
             lastStreamPid.orElseThrow(),
-            this::getStreamPid
+            this::safeGetStreamPid
         );
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws JSchException {
         Properties props = Utilities.readProperties(new String[] {"aimingFEThree2020"});
 
         Main.properties_ = props;
@@ -254,24 +276,30 @@ public abstract class AbstractSource implements VideoSource {
     protected void runRemote() { // TODO: configurable timeout/restart logic, etc, etc
 
         timeOut = new TimeOut(Duration.ofSeconds(30));
-        if(hasRunningStream()) {
-            bindRemoteCommand();
-        } else {
-            runRemoteCommand();
-        }
+        try {
+            if(hasRunningStream()) {
+                bindRemoteCommand();
+            } else {
+                runRemoteCommand();
+            }
 
-        timer_.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if (timeOut.hasTimedOut() && (exec_.get() != null)) {
-                    LOG.warning(() -> "Frame Update Timeout (" + timeOut.lastDiff(TimeUnit.SECONDS) + " sec) @ " + remote_);
-                    exec_.set(null);
-                    synchronized (execLock_) {
-                        execLock_.notifyAll();
+            timer_.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (timeOut.hasTimedOut() && (exec_.get() != null)) {
+                        LOG.warning(() -> "Frame Update Timeout (" + timeOut.lastDiff(TimeUnit.SECONDS) + " sec) @ " + remote_);
+                        exec_.set(null);
+                        synchronized (execLock_) {
+                            execLock_.notifyAll();
+                        }
                     }
                 }
-            }
-        }, TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(1));
+            }, TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(1));
+
+        } catch (JSchException ex) {
+            LogRecord mess = new LogRecord(WARNING, "Failed to start run remote, retring in 10sec");
+            timer_.purge();
+        }
     }
 
     @Override

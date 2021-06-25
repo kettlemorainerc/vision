@@ -2,9 +2,7 @@ package org.usfirst.frc.team2077.logging;
 
 import java.io.*;
 import java.time.*;
-import java.util.*;
 import java.util.logging.*;
-import java.util.logging.Formatter;
 
 /**
  * the first 12 items in a format will be the following log record items
@@ -61,9 +59,16 @@ public class FormatFormatter extends Formatter {
 
     @Override
     public String format(LogRecord record) {
-        int len = 12;
-        if(record.getParameters() != null) len += record.getParameters().length;
-        Object[] args = new Object[len];
+        Object[] params = record.getParameters();
+        Object[] args;
+
+        if(params != null) {
+            args = new Object[12 + params.length];
+            System.arraycopy(params, 0, args, 12, params.length);
+        } else {
+            args = new Object[12];
+        }
+
         args[0] = record.getLevel();
         args[1] = record.getInstant().atZone(ZoneId.systemDefault());
         args[2] = record.getLoggerName();
@@ -76,9 +81,6 @@ public class FormatFormatter extends Formatter {
         args[9] = record.getResourceBundle();
         args[10] = record.getResourceBundleName();
         args[11] = record.getSequenceNumber();
-
-        Object[] params = record.getParameters();
-        if(params != null) System.arraycopy(params, 0, args, 12, params.length);
 
         String ret = String.format(format, args);
         if(record.getThrown() != null && showStackTraces) {

@@ -50,13 +50,15 @@ public class RemoteCommandBinding extends Thread {
             timeOut.reset();
             MILLISECONDS.sleep(500);
         }
+        // the exec returned, we'll need to get a new one
+        exec = null;
     }
 
     private void getNewConnectionPid() throws InterruptedException {
-        exec = null;
-        while(exec == null) {
-            getNextPid.get().ifPresent(this::updateExec);
+        getNextPid.get().ifPresent(this::updateExec); // try 1 time without pause
+        while(exec == null && !isInterrupted()) { // retry every .1 seconds until we either get a new exec or get interrupted
             MILLISECONDS.sleep(100);
+            getNextPid.get().ifPresent(this::updateExec);
         }
     }
 
@@ -65,11 +67,12 @@ public class RemoteCommandBinding extends Thread {
         while(true) {
             try {
                 waitForCommandToReturn();
+                // we could do an exec == null check, but look at the last line of waitForCommandToReturn
                 getNewConnectionPid();
             } catch(JSchException e) {
                 LOG.log(INFO, "Failed to connect to target remote", e);
             } catch(InterruptedException e) { // Basically, we need to stop running
-                LOG.info("Interrrupted while binding to remote command");
+                LOG.info("Interrupted while binding to remote command");
                 break;
             }
         }
