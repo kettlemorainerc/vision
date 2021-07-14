@@ -79,12 +79,13 @@ public class AimingOverlay implements FrameProcessor {
         if ( (nte = getNTE("RangeAV")) != null ) {
             double[] rangeAV = nte.getDoubleArray(new double[]{0, 0});
 
-            String angle = "Angle:" + (Math.round(rangeAV[0] *10.)/10.);
+            String angle = "Angles:" + (Math.round(rangeAV[0] *100.)/100.);
             drawText(overlayMat, angle, 20, rows/2+35);
 
             String velocity = "Velocity:" + Math.round(rangeAV[1]);
             drawText(overlayMat, velocity, 20, rows/2 - 6);
         }
+//        System.out.println(nte);
 
         if ( (nte = getNTE("ReadyShoot")) != null ) {
             boolean ready = nte.getBoolean(false);
