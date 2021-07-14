@@ -3,10 +3,7 @@ package org.usfirst.frc.team2077.vision.processors;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.usfirst.frc.team2077.vision.Main.FrameProcessor;
 import org.usfirst.frc.team2077.vision.NTMain;
@@ -19,6 +16,24 @@ public class AimingOverlay implements FrameProcessor {
 
     @Override
     public void processFrame( Mat frameMat, Mat overlayMat ) {
+        if(HSV_Module.FLAG_ISPIZZA) {
+            Mat tempMap = frameMat.clone();//TODO: Remove this
+            Core.rotate(tempMap, frameMat, Core.ROTATE_90_CLOCKWISE);//TODO: Autodetect type
+//            tempMap = overlayMat.clone();
+            Core.rotate(tempMap, overlayMat, Core.ROTATE_90_CLOCKWISE);//TODO: Autodetect type
+        }
+        Rect rectCrop = new Rect(0,frameMat.rows()/2,frameMat.cols(),frameMat.rows()/2);
+        if(HSV_Module.FLAG_CROPPING_VISION_INPUT_DEBUGGING){
+            System.out.println("rectCrop.x = "+rectCrop.x);
+            System.out.println("rectCrop.y = "+rectCrop.y);
+            System.out.println("rectCrop.width = "+rectCrop.width);
+            System.out.println("rectCrop.height = "+rectCrop.height);
+            System.out.println("framemat.col = "+frameMat.cols());
+            System.out.println("framemat.row = "+frameMat.rows());
+        }
+
+        Mat image_output = frameMat.submat(rectCrop);
+        frameMat = image_output;
 
         Scalar red = new Scalar(0,0,255,255);
         Scalar green = new Scalar(0,255,0,255);
@@ -76,6 +91,18 @@ public class AimingOverlay implements FrameProcessor {
             drawText(overlayMat, "Shoot?: ", 20, rows/2+160);
             Imgproc.circle(overlayMat, new Point(155, rows/2+150), 5, ready ? green : red, 9);
         }
+
+//        AJ AJ_HSV_Module addition and testing code
+//        TODO: Change to nte check
+        if(true){
+//            TODO: Program in custom object to store
+//            double[] foundBallLocations =
+
+
+                    HSV_Module.findBallLocations(frameMat, overlayMat);
+//            System.out.println("findBallLocations[0] = "+foundBallLocations[0]);
+        }
+
     }
 
     private void drawText(Mat mat, String text, double x, double y) {

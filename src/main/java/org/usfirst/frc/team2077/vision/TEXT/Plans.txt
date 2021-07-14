@@ -1,0 +1,12 @@
+TODO:
+
+GOALS
+- Vision to provide a helpful GUI that can interface with smartdashboard to change operations live.
+
+
+GUI Desighn
+- Fill in lead ball
+- outline all balls grey
+- red outline for top three balls
+
+NEED TO SHRINK AREA BEING SEARCHED INSTEAD OF JUST IGNORING

@@ -1,4 +1,4 @@
-SORIGNAL - Mr.B
+ORIGINAL - Mr.B
 H min = 18
 H max = 49
 S min = 148
@@ -9,8 +9,7 @@ R min = 20
 R max = 100
 Threashold = 100
 
-
-
+CURRENT (may not be updated)
 H min =
 H max =
 S min =
