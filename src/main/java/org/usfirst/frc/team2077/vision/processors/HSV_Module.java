@@ -129,7 +129,7 @@ public class HSV_Module implements Main.FrameProcessor {
         }
     }
 
-    public static double[] findBallLocations(Mat frameMat, Mat overlayMat) {
+    public static Ball[] findBallLocations(Mat frameMat, Mat overlayMat) {
 
         Map<String, NetworkTableEntry> nte_ = new TreeMap<>();
 
@@ -320,7 +320,7 @@ public class HSV_Module implements Main.FrameProcessor {
 
         System.out.println( " processFrame time " + (System.currentTimeMillis() - t0) + "ms" );
 
-        return new double[]{0.0};
+        return balls;
     }
 
 

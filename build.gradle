@@ -11,7 +11,7 @@ plugins {
 //    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest("org.usfirst.frc.team2077.video.Main")
 //}
 
-def targetConfiguration = "aimingFEThree2020_AJTESTING";
+def targetConfiguration = "aimingFEThree2020";
 targetCompatibility = (JavaVersion.VERSION_11)
 sourceCompatibility = (JavaVersion.VERSION_11)
 
