@@ -25,7 +25,7 @@ public class HSV_Module implements FrameProcessor {
 
     /*           FLAGS               */
     public static final boolean FLAG_DEBUGLINE = false;
-    public static final boolean FLAG_ISPIZZA = false;
+    public static final boolean FLAG_ISPIZZA = true;
     public static final boolean FLAG_SMARTDASHBOARD = false;
     public static final boolean FLAG_BALLTEXTLABLES = false;
     public static final boolean FLAG_DEBUGANGLE_IN_CENTER = false;//TODO: Make changeable
