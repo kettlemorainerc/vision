@@ -21,9 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This class is the replacement of the HSVFilter_MERGED which now is being deprecated. The goal is to
  * switch the filter to a more external process which can be called static-aly.
  */
-public class HSV_Module implements FrameProcessor {
+public class HSV_Module_ implements FrameProcessor {
 
-    /*           FLAGS               */
+/*           FLAGS               */
     public static final boolean FLAG_DEBUGLINE = false;
     public static final boolean FLAG_ISPIZZA = false;
     public static final boolean FLAG_SMARTDASHBOARD = false;
@@ -33,21 +33,21 @@ public class HSV_Module implements FrameProcessor {
     public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = false;
 
 
-    /* START CONSTENTS */
+            /* START CONSTENTS */
     public static final int VISION_WIDTH = 1_000;//TODO: implement get rows or colloms
     public static final int VISION_DEGREES = 90;
 
 
-    //COLORS
+//COLORS
     public static final Scalar RED = new Scalar(0,0,255,255);
     public static final Scalar GREEN = new Scalar(0,255,0,255);
     public static final Scalar WHITE = new Scalar(255,255,255,255);
     public static final Scalar GREY = new Scalar(180,180,180,255);
     public static final Scalar BLACK = new Scalar(0,0,0,255);
     public static final Scalar PURPLELY = new Scalar(255, 0, 255, 255);
-    //    public static final Scalar BLOOD_ORANGE = new Scalar(255, 93, 64, 255);
+//    public static final Scalar BLOOD_ORANGE = new Scalar(255, 93, 64, 255);
     public static final Scalar BLOOD_ORANGE = new Scalar(93, 64, 255, 120);
-    //USED COLORS
+//USED COLORS
     public static final Scalar COLOR_DEBUG_MIDLINE = GREY;
     public static final Scalar MAIN_BALL_FILL_COLOR = PURPLELY;
     public static final Scalar MAIN_BALL_OUTLINE_COLOR = GREEN;
@@ -57,18 +57,18 @@ public class HSV_Module implements FrameProcessor {
     public static final Scalar ALL_OVERLAYMAT_BALL_OUTLINE = BLACK;
     /* END CONSTENTS */
 
+
     private final static Map<String, Setting> settings_ = Setting.initializeSettings( "HSVFilter Settings",
 
-            new HSV_Module.Setting( "H min", 0, 255, 15 ),
-            new HSV_Module.Setting( "H max", 0, 255, 50 ),
-            new HSV_Module.Setting( "S min", 0, 255, 148 ),
-            new HSV_Module.Setting( "S max", 0, 255, 255 ),
-            new HSV_Module.Setting( "V min", 0, 255, 106 ),
-            new HSV_Module.Setting( "V max", 0, 255, 255 ),
-            new HSV_Module.Setting( "R min", 0, 255, 12 ),
-            new HSV_Module.Setting( "R max", 0, 255, 130 ),
-            new HSV_Module.Setting( "Threshold", 0, 255, 63 ),
-            new HSV_Module.SettingBox("Alliance","Blue","Red",true));
+            new HSV_Module_.Setting( "H min", 0, 255, 15 ),
+            new HSV_Module_.Setting( "H max", 0, 255, 49 ),
+            new HSV_Module_.Setting( "S min", 0, 255, 148 ),
+            new HSV_Module_.Setting( "S max", 0, 255, 255 ),
+            new HSV_Module_.Setting( "V min", 0, 255, 106 ),
+            new HSV_Module_.Setting( "V max", 0, 255, 255 ),
+            new HSV_Module_.Setting( "R min", 0, 255, 12 ),
+            new HSV_Module_.Setting( "R max", 0, 255, 95 ),
+            new HSV_Module_.Setting( "Threshold", 0, 255, 63 ) );
 
     public static class Setting {
 
@@ -77,10 +77,6 @@ public class HSV_Module implements FrameProcessor {
         public JLabel valueLabel_;
         public AtomicInteger value_;
         public JSlider slider_;
-
-        public JCheckBox checkBox_;//TODO: Make JComponent so it works with other buttons as well?
-        public String onName_;
-        public String offName_;
 
         public Setting( String name, int min, int max, int value ) {
             name_ = name;
@@ -93,19 +89,6 @@ public class HSV_Module implements FrameProcessor {
                 public void stateChanged( ChangeEvent e ) {
                     value_.set( slider_.getValue() );
                     valueLabel_.setText( "" + value_.get() );
-                }
-            } );
-        }
-        public SettingBox( String name, String offName, String onName, boolean state ) {
-            name_ = state? onName:offName;
-            nameLabel_ = new JLabel( name );
-            valueLabel_ = new JLabel( "" + value_.get() );
-            checkBox_ = new JCheckBox( );
-            slider_.addChangeListener( new ChangeListener() {
-                @Override
-                public void stateChanged( ChangeEvent e ) {
-                    value_.set( checkBox_.isSelected()?0:1);//store boolean as atomic integer to keep variables similar
-                    valueLabel_.setText( "" + (value_.get()==0? onName_:offName_ ));
                 }
             } );
         }
@@ -155,25 +138,13 @@ public class HSV_Module implements FrameProcessor {
 
         long t0 = System.currentTimeMillis();
 
-//        Imgproc.cvtColor(frameMat, rgb, Imgproc.COLOR_BGRA2RGB);
-//        Imgproc.cvtColor(rgb, hsv, Imgproc.COLOR_RGB2HSV);
-        if(settings_.get("Alliance").value() == 0)
-            System.out.println("TEST");
-//            Imgproc.cvtColor(frameMat, hsv, Imgproc.COLOR_RGB2HSV);
-
+        Imgproc.cvtColor(frameMat, rgb, Imgproc.COLOR_BGRA2RGB);
+        Imgproc.cvtColor(rgb, hsv, Imgproc.COLOR_RGB2HSV);
 
         Imgproc.GaussianBlur(hsv, hsv, new Size(5, 5), 1);
         // Core.inRange(hsv, new Scalar(27, 75, 120), new Scalar(31, 255, 255), hsv);
-        Core.inRange(hsv, new Scalar(
-//                        settings_.get("Color").value() * 100 + 10,
-                        settings_.get("H min").value(),
-                        settings_.get("S min").value(),
-                        settings_.get("V min").value()),
-                new Scalar(
-                        settings_.get("H max").value(),
-//                        settings_.get("Color").value() * 100 + 50,
-                        settings_.get("S max").value(),
-                        settings_.get("V max").value()), gray);
+        Core.inRange(hsv, new Scalar(settings_.get("H min").value(), settings_.get("S min").value(), settings_.get("V min").value()),
+                new Scalar(settings_.get("H max").value(), settings_.get("S max").value(), settings_.get("V max").value()), gray);
 
         // Imgproc.GaussianBlur(gray, gray, new Size(20, 20), 1);
         Imgproc.GaussianBlur(gray, gray, new Size(25, 25), 0, 0);
@@ -345,11 +316,6 @@ public class HSV_Module implements FrameProcessor {
 
         System.out.println( " processFrame time " + (System.currentTimeMillis() - t0) + "ms" );
 
-
-        frameMat.copyTo(overlayMat);
-//        frameMat.copyTo(secondMat);
-
-
         return balls;
     }
 
@@ -365,10 +331,6 @@ public class HSV_Module implements FrameProcessor {
         }
         return null;
     }
-
-
-
-
 
     private static void drawText(Mat mat, String text, double x, double y) {
         Imgproc.putText( mat, text, new Point(x, y), Core.FONT_HERSHEY_SIMPLEX, 1, new Scalar(0,0,0,255), 2 );

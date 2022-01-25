@@ -102,6 +102,7 @@ public class AimingOverlay implements FrameProcessor {
 
             }
         }
+//        frameMat.copyTo(overlayMat);
 
     }
 

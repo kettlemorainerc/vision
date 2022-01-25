@@ -44,6 +44,7 @@ public class Main {
     protected static Collection<VideoView> mappedViews_ = new HashSet<>();
 
     protected static JFrame videoFrame_;
+    protected static JFrame videoFrame2_;
     private static Thread networkTables;
 
     /**
@@ -151,6 +152,16 @@ public class Main {
                 }
             }
         });
+        videoFrame2_ = new JFrame("Video2");
+        videoFrame2_.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        videoFrame2_.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent we) {
+                for (VideoSource vs : sources_.values()) {
+                    vs.stop();
+                }
+            }
+        });
     }
 
     private static void initSources() {
@@ -198,6 +209,7 @@ public class Main {
                                                       .newInstance(name);
                 views_.put(name, view);
                 if (view.isMapped()) {
+                    mappedViews_.add(view);
                     mappedViews_.add(view);
                 }
             } catch (Exception ex) {
