@@ -97,6 +97,7 @@ public class AimingOverlay implements FrameProcessor {
 //        TODO: Change to nte check
         if(true){
             Ball[] foundBallLocations = HSV_Module.findBallLocations(frameMat, overlayMat);
+
             System.out.print("findBallLocations = ");
             for(Ball ball: foundBallLocations){
 

@@ -25,7 +25,7 @@ public class HSV_Module implements FrameProcessor {
 
     /*           FLAGS               */
     public static final boolean FLAG_DEBUGLINE = false;
-    public static final boolean FLAG_ISPIZZA = true;
+    public static final boolean FLAG_ISPIZZA = false;
     public static final boolean FLAG_SMARTDASHBOARD = false;
     public static final boolean FLAG_BALLTEXTLABLES = false;
     public static final boolean FLAG_DEBUGANGLE_IN_CENTER = false;//TODO: Make changeable
@@ -59,16 +59,16 @@ public class HSV_Module implements FrameProcessor {
 
     private final static Map<String, Setting> settings_ = Setting.initializeSettings( "HSVFilter Settings",
 
-            new HSV_Module.Setting( "H min", 0, 255, 15 ),
-            new HSV_Module.Setting( "H max", 0, 255, 50 ),
-            new HSV_Module.Setting( "S min", 0, 255, 148 ),
+            new HSV_Module.Setting( "H min", 0, 255, 120 ),
+            new HSV_Module.Setting( "H max", 0, 255, 150 ),
+            new HSV_Module.Setting( "S min", 0, 255, 40 ),
             new HSV_Module.Setting( "S max", 0, 255, 255 ),
-            new HSV_Module.Setting( "V min", 0, 255, 106 ),
+            new HSV_Module.Setting( "V min", 0, 255, 85 ),
             new HSV_Module.Setting( "V max", 0, 255, 255 ),
-            new HSV_Module.Setting( "R min", 0, 255, 12 ),
+            new HSV_Module.Setting( "R min", 0, 255, 30 ),
             new HSV_Module.Setting( "R max", 0, 255, 130 ),
-            new HSV_Module.Setting( "Threshold", 0, 255, 63 ),
-            new HSV_Module.SettingBox("Alliance","Blue","Red",true));
+            new HSV_Module.Setting( "Threshold", 0, 255, 65 ),
+            new HSV_Module.Setting("Alliance",0,1,0, "Red", "Blue"));
 
     public static class Setting {
 
@@ -96,19 +96,40 @@ public class HSV_Module implements FrameProcessor {
                 }
             } );
         }
-        public SettingBox( String name, String offName, String onName, boolean state ) {
-            name_ = state? onName:offName;
+        public Setting( String name, int min, int max, int value, String onName, String offName ) {
+            name_ = name;
+            onName_ = onName;
+            offName_ = offName;
+            value_ = new AtomicInteger( value );
             nameLabel_ = new JLabel( name );
-            valueLabel_ = new JLabel( "" + value_.get() );
-            checkBox_ = new JCheckBox( );
+            valueLabel_ = new JLabel( "" + (value_.get()==1? onName:offName) );
+            slider_ = new JSlider( min, max, value );
             slider_.addChangeListener( new ChangeListener() {
                 @Override
                 public void stateChanged( ChangeEvent e ) {
-                    value_.set( checkBox_.isSelected()?0:1);//store boolean as atomic integer to keep variables similar
-                    valueLabel_.setText( "" + (value_.get()==0? onName_:offName_ ));
+                    value_.set( slider_.getValue() );
+                    valueLabel_.setText( "" + (value_.get()==1? onName:offName) );
                 }
             } );
         }
+//        public Setting( String name, String offName, String onName, boolean state ) {
+////            name_ = state? onName:offName;
+//            onName_ = onName;
+//            offName_ = offName;
+//            value_ = new AtomicInteger( (int) ((state)?0:1) );
+//            nameLabel_ = new JLabel( name );
+//            valueLabel_ = new JLabel( "" + (value_.get()==1? onName_:offName_) );
+////            valueLabel_ = new JLabel( "" + value_.get() );
+////            checkBox_ = new JCheckBox( );
+//            slider_ = new JSlider( 0, 1, value_.get());
+//            slider_.addChangeListener( new ChangeListener() {
+//                @Override
+//                public void stateChanged( ChangeEvent e ) {
+//                    value_.set( slider_.getValue() );//store boolean as atomic integer to keep variables similar
+//                    valueLabel_.setText( "" + value_.get());//(value_.get()==1? onName_:offName_ ));
+//                }
+//            } );
+//        }
 
         public int value() {
             return value_.get();
@@ -157,21 +178,21 @@ public class HSV_Module implements FrameProcessor {
 
 //        Imgproc.cvtColor(frameMat, rgb, Imgproc.COLOR_BGRA2RGB);
 //        Imgproc.cvtColor(rgb, hsv, Imgproc.COLOR_RGB2HSV);
-        if(settings_.get("Alliance").value() == 0)
-            System.out.println("TEST");
-//            Imgproc.cvtColor(frameMat, hsv, Imgproc.COLOR_RGB2HSV);
+//        if(settings_.get("Alliance").value() == 0)
+//            System.out.println("TEST");
+        Imgproc.cvtColor(frameMat, hsv, Imgproc.COLOR_RGB2HSV);
 
 
         Imgproc.GaussianBlur(hsv, hsv, new Size(5, 5), 1);
         // Core.inRange(hsv, new Scalar(27, 75, 120), new Scalar(31, 255, 255), hsv);
         Core.inRange(hsv, new Scalar(
-//                        settings_.get("Color").value() * 100 + 10,
-                        settings_.get("H min").value(),
+                        settings_.get("Alliance").value() * 120,
+//                        settings_.get("H min").value(),
                         settings_.get("S min").value(),
                         settings_.get("V min").value()),
                 new Scalar(
-                        settings_.get("H max").value(),
-//                        settings_.get("Color").value() * 100 + 50,
+//                        settings_.get("H max").value(),
+                        settings_.get("Alliance").value() * 120 + 30,
                         settings_.get("S max").value(),
                         settings_.get("V max").value()), gray);
 
@@ -346,7 +367,8 @@ public class HSV_Module implements FrameProcessor {
         System.out.println( " processFrame time " + (System.currentTimeMillis() - t0) + "ms" );
 
 
-        frameMat.copyTo(overlayMat);
+//        frameMat.copyTo(overlayMat);
+
 //        frameMat.copyTo(secondMat);
 
 
