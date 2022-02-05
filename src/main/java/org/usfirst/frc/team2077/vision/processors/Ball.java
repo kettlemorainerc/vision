@@ -7,6 +7,12 @@ public class Ball implements Comparable<Ball>{
     private int x = -1, y = -1, r = -1;
     private double a = -1.0;
 
+    private static double width = HSV_Module.VISION_WIDTH;
+    private static double horizPixels = Math.sqrt(width);
+    private static double focalLength = 334.0;
+    private static double anglePerPixel = horizPixels/focalLength;
+
+
     public Ball(){
         x = 0;
         y = 0;
@@ -45,8 +51,11 @@ public class Ball implements Comparable<Ball>{
 
 
     private static double getAngle(int x_, int y_){
-        int returnDeg = (int) Math.toDegrees(Math.atan(x_-500/(y_/2)));
-        return (returnDeg != -90.0)? returnDeg:0;
+
+//        int returnDeg = (int) Math.toDegrees(Math.atan(x_-500/(y_/2)));
+//        return (returnDeg != -90.0)? returnDeg:0.0;
+        return (width/2.0 - x_) * anglePerPixel;
+
     }
 
 

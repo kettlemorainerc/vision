@@ -25,12 +25,12 @@ public class HSV_Module implements FrameProcessor {
 
     /*           FLAGS               */
     public static final boolean FLAG_DEBUGLINE = false;
-    public static final boolean FLAG_ISPIZZA = false;
+    public static final boolean FLAG_ISPIZZA = true;
     public static final boolean FLAG_SMARTDASHBOARD = false;
-    public static final boolean FLAG_BALLTEXTLABLES = false;
+    public static final boolean FLAG_BALLTEXTLABLES = true;
     public static final boolean FLAG_DEBUGANGLE_IN_CENTER = false;//TODO: Make changeable
     public static final boolean FLAG_CROPPING_VISION_INPUT_DEBUGGING = false;
-    public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = false;
+    public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = true;
 
 
     /* START CONSTENTS */
@@ -252,6 +252,8 @@ public class HSV_Module implements FrameProcessor {
                 Point center = new Point(x, y);
                 System.out.println("CIRCLE " + i + " " + center + " " + r);
 
+
+
                 NetworkTableInstance.getDefault().getEntry("ball").setDoubleArray(new double[]{x, y, (double) r});
 
 
@@ -343,8 +345,16 @@ public class HSV_Module implements FrameProcessor {
             drawText(overlayMat, "("+_1A+""+")", VISION_WIDTH/2-40, VISION_WIDTH/2);
 
         try{//TODO: Should I keep this or just make everything it's .length? Also kinda on a time crunch
+//            if(balls[0].radius() > 0 && FLAG_BALLTEXTLABLES){
+//                drawText(overlayMat, ">[1]<", balls[0].x()-(balls[0].radius()/2), balls[0].y());
+//                if(balls[1].radius() > 0) {
+//                    drawText(overlayMat, "[2]", balls[1].x()-(balls[1].radius()/2), balls[1].y());
+//                    if(balls[2].radius() > 0)
+//                        drawText(overlayMat, "[3]", balls[2].x()-(balls[2].radius()/2), balls[2].y());
+//                }
+//            }
             if(balls[0].radius() > 0 && FLAG_BALLTEXTLABLES){
-                drawText(overlayMat, ">[1]<", balls[0].x()-(balls[0].radius()/2), balls[0].y());
+                drawText(overlayMat, balls[0].angle()+"", balls[0].x()-(balls[0].radius()/2), balls[0].y());
                 if(balls[1].radius() > 0) {
                     drawText(overlayMat, "[2]", balls[1].x()-(balls[1].radius()/2), balls[1].y());
                     if(balls[2].radius() > 0)

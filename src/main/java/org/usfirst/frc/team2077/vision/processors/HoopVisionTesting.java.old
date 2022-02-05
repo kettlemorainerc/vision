@@ -21,51 +21,54 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This class is the replacement of the HSVFilter_MERGED which now is being deprecated. The goal is to
  * switch the filter to a more external process which can be called static-aly.
  */
-public class RingDetection implements FrameProcessor {
+public class HoopVisionTesting implements FrameProcessor {
 
-//    /*           FLAGS               */
-//    public static final boolean FLAG_DEBUGLINE = false;
-//    public static final boolean FLAG_SMARTDASHBOARD = false;
-//    public static final boolean FLAG_BALLTEXTLABLES = false;
-//    public static final boolean FLAG_DEBUGANGLE_IN_CENTER = false;//TODO: Make changeable
-//    public static final boolean FLAG_CROPPING_VISION_INPUT_DEBUGGING = false;
-//    public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = false;
+    /*           FLAGS               */
+    public static final boolean FLAG_DEBUGLINE = false;
+    public static final boolean FLAG_ISPIZZA = false;
+    public static final boolean FLAG_SMARTDASHBOARD = false;
+    public static final boolean FLAG_BALLTEXTLABLES = false;
+    public static final boolean FLAG_DEBUGANGLE_IN_CENTER = false;//TODO: Make changeable
+    public static final boolean FLAG_CROPPING_VISION_INPUT_DEBUGGING = false;
+    public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = false;
 
 
-//    /* START CONSTENTS */
-//    public static final int VISION_WIDTH = 1_000;//TODO: implement get rows or colloms
-//    public static final int VISION_DEGREES = 90;
+    /* START CONSTENTS */
+    public static final int VISION_WIDTH = 1_000;//TODO: implement get rows or colloms
+    public static final int VISION_DEGREES = 90;
 
 
     //COLORS
-//    public static final Scalar RED = new Scalar(0,0,255,255);
-//    public static final Scalar GREEN = new Scalar(0,255,0,255);
-//    public static final Scalar WHITE = new Scalar(255,255,255,255);
-//    public static final Scalar GREY = new Scalar(180,180,180,255);
-//    public static final Scalar BLACK = new Scalar(0,0,0,255);
-//    public static final Scalar PURPLELY = new Scalar(255, 0, 255, 255);
-//    //    public static final Scalar BLOOD_ORANGE = new Scalar(255, 93, 64, 255);
-//    public static final Scalar BLOOD_ORANGE = new Scalar(93, 64, 255, 120);
-//    //USED COLORS
-//    public static final Scalar COLOR_DEBUG_MIDLINE = GREY;
-//    public static final Scalar MAIN_BALL_FILL_COLOR = PURPLELY;
-//    public static final Scalar MAIN_BALL_OUTLINE_COLOR = GREEN;
-//    public static final Scalar BALL_FILL_COLOR = BLOOD_ORANGE;
-//    public static final Scalar FRAMEMAT_BALL_OUTLINE = GREY;//new Scalar(0, 0, 255, 64);
-//    public static final Scalar OVERLAYMAT_BALL_OUTLINE = BLOOD_ORANGE;// new Scalar(0, 0, 255, 128);
-//    public static final Scalar ALL_OVERLAYMAT_BALL_OUTLINE = BLACK;
-//    /* END CONSTENTS */
+    public static final Scalar RED = new Scalar(0,0,255,255);
+    public static final Scalar GREEN = new Scalar(0,255,0,255);
+    public static final Scalar WHITE = new Scalar(255,255,255,255);
+    public static final Scalar GREY = new Scalar(180,180,180,255);
+    public static final Scalar BLACK = new Scalar(0,0,0,255);
+    public static final Scalar PURPLELY = new Scalar(255, 0, 255, 255);
+    //    public static final Scalar BLOOD_ORANGE = new Scalar(255, 93, 64, 255);
+    public static final Scalar BLOOD_ORANGE = new Scalar(93, 64, 255, 120);
+    //USED COLORS
+    public static final Scalar COLOR_DEBUG_MIDLINE = GREY;
+    public static final Scalar MAIN_BALL_FILL_COLOR = PURPLELY;
+    public static final Scalar MAIN_BALL_OUTLINE_COLOR = GREEN;
+    public static final Scalar BALL_FILL_COLOR = BLOOD_ORANGE;
+    public static final Scalar FRAMEMAT_BALL_OUTLINE = GREY;//new Scalar(0, 0, 255, 64);
+    public static final Scalar OVERLAYMAT_BALL_OUTLINE = BLOOD_ORANGE;// new Scalar(0, 0, 255, 128);
+    public static final Scalar ALL_OVERLAYMAT_BALL_OUTLINE = BLACK;
+    /* END CONSTENTS */
 
     private final static Map<String, Setting> settings_ = Setting.initializeSettings( "HSVFilter Settings",
 
-            new RingDetection.Setting( "H min", 0, 255, 120 ),
-            new RingDetection.Setting( "H max", 0, 255, 150 ),
-            new RingDetection.Setting( "S min", 0, 255, 40 ),
-            new RingDetection.Setting( "S max", 0, 255, 255 ),
-            new RingDetection.Setting( "V min", 0, 255, 85 ),
-            new RingDetection.Setting( "V max", 0, 255, 255 ));
-//            new RingDetection.Setting( "R min", 0, 255, 30 ),
-//            new RingDetection.Setting( "R max", 0, 255, 130 ));
+            new HoopVisionTesting.Setting( "H min", 0, 255, 120 ),
+            new HoopVisionTesting.Setting( "H max", 0, 255, 150 ),
+            new HoopVisionTesting.Setting( "S min", 0, 255, 40 ),
+            new HoopVisionTesting.Setting( "S max", 0, 255, 255 ),
+            new HoopVisionTesting.Setting( "V min", 0, 255, 85 ),
+            new HoopVisionTesting.Setting( "V max", 0, 255, 255 ),
+//            new HoopVisionTesting.Setting( "R min", 0, 255, 30 ),
+//            new HoopVisionTesting.Setting( "R max", 0, 255, 130 ),
+            new HoopVisionTesting.Setting( "Threshold", 0, 255, 65 )
+    );
 
     public static class Setting {
 
@@ -93,7 +96,6 @@ public class RingDetection implements FrameProcessor {
                 }
             } );
         }
-
 
         public int value() {
             return value_.get();
@@ -135,12 +137,15 @@ public class RingDetection implements FrameProcessor {
         Mat hsv = new Mat();
         Mat gray = new Mat();
 
-        List<Ball> ballsList = new LinkedList<Ball>();//TODO: Care about under center
+//        List<Ball> ballsList = new LinkedList<Ball>();//TODO: Care about under center
 //        List<Ball> ballsList = new LinkedList<Ball>();
 
         long t0 = System.currentTimeMillis();
 
-
+//        Imgproc.cvtColor(frameMat, rgb, Imgproc.COLOR_BGRA2RGB);
+//        Imgproc.cvtColor(rgb, hsv, Imgproc.COLOR_RGB2HSV);
+//        if(settings_.get("Alliance").value() == 0)
+//            System.out.println("TEST");
         Imgproc.cvtColor(frameMat, hsv, Imgproc.COLOR_RGB2HSV);
 
 
@@ -166,11 +171,11 @@ public class RingDetection implements FrameProcessor {
 
         Mat circles = new Mat();
 
-//        double cannyThreshhold = 10;
+        double cannyThreshhold = 10;
 //        int[] circleSizeRange = {settings_.get("R min").value(), settings_.get("R max").value()};
 //        int circleProximity = 2 * circleSizeRange[0];
 //        double circleThreshold = settings_.get("Threshold").value();
-//        int accumulatorScale = 2;
+        int accumulatorScale = 2;
 
         // gray 8-bit, single-channel, grayscale input image.
         // circles Output vector of found circles. Each vector is encoded as a 3-element floating-point vector
@@ -190,25 +195,24 @@ public class RingDetection implements FrameProcessor {
         // circleSizeRange[0] Minimum circle radius.
         // circleSizeRange[1] Maximum circle radius.
 
-
+        ///TODO: Replace with
 //        Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, accumulatorScale, circleProximity, cannyThreshhold, circleThreshold, circleSizeRange[0], circleSizeRange[1]);
-
 
         // Imgproc.Canny(gray, gray, Math.max(1, cannyThreshhold/2), cannyThreshhold); // approximates internal
         // HoughCircles processing
         Imgproc.cvtColor(gray, frameMat, Imgproc.COLOR_GRAY2BGRA);
 
-//        System.out.println("#rows " + circles.rows() + " #cols " + circles.cols());
+        System.out.println("#rows " + circles.rows() + " #cols " + circles.cols());
 
 
-//        for (int i = 0; i < Math.min(5, circles.cols()); i++) {
-//            double[] data = circles.get(0, i);
-//
-//            int x = (int) data[0];
-//            int y = (int) data[1];
-//            int r = (int) data[2];
-//
-//
+        for (int i = 0; i < Math.min(5, circles.cols()); i++) {
+            double[] data = circles.get(0, i);
+
+            int x = (int) data[0];
+            int y = (int) data[1];
+            int r = (int) data[2];
+
+
 //            if(FLAG_DEBUGLINE)Imgproc.line( overlayMat, new Point(0,VISION_WIDTH), new Point(VISION_WIDTH, VISION_WIDTH), COLOR_DEBUG_MIDLINE, 3);
 //            if(y >= VISION_WIDTH/2){
 //                Point center = new Point(x, y);
@@ -223,8 +227,8 @@ public class RingDetection implements FrameProcessor {
 //            }
 //
 //            ballsList.add(new Ball(x,y+frameMat.rows(),r));
-//        }
-//
+        }
+
 //        ballsList.sort(Comparator.reverseOrder());
 //        Ball[] balls = new Ball[ballsList.size()];
 //        if(FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
@@ -240,9 +244,10 @@ public class RingDetection implements FrameProcessor {
 //                System.out.println();
 //            }
 //        }
-//        if(FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
-//
-//
+
+        if(FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
+
+
 //        for (int i = 0; i < Math.min(5, circles.cols()); i++) {
 //
 //            double[] presentCiricleData = circles.get(0, i);
@@ -266,22 +271,22 @@ public class RingDetection implements FrameProcessor {
 */
 
 
-//        double _1A = 0.0;//TODO: Cleanup this thingamagigger
-//        double _2A = 0.0;
-//        double _3A = 0.0;
-////Will compute angle from North center
-//
+        double _1A = 0.0;//TODO: Cleanup this thingamagigger
+        double _2A = 0.0;
+        double _3A = 0.0;
+//Will compute angle from North center
+
 //        _1A = (balls.length > 0 && balls[0] != null)? balls[0].angle() : -1;
 //        _2A = (balls.length > 1 && balls[1] != null)? balls[1].angle() : -1;
 //        _3A = (balls.length > 2 && balls[2] != null)? balls[2].angle() : -1;
-//
-//
-////        FILL the MAIN ball
+
+
+//        FILL the MAIN ball
 //        if(balls.length > 0){
 //            Imgproc.circle(frameMat, balls[0].point(), 0, MAIN_BALL_FILL_COLOR, 2*(int)(balls[0].radius()*.75));
 //            Imgproc.circle(overlayMat, balls[0].point(), 0, MAIN_BALL_FILL_COLOR, 2*(int)(balls[0].radius()*.75));
 //        }
-//
+
 //        for(int i = 1; i<3 && i<balls.length; i++){
 //
 //            Point temp = balls[i].point();
@@ -298,8 +303,8 @@ public class RingDetection implements FrameProcessor {
 //            Imgproc.circle(frameMat, balls[0].point(), (int) balls[0].radius(), MAIN_BALL_OUTLINE_COLOR, 5);
 //            Imgproc.circle(overlayMat, balls[0].point(), (int) balls[0].radius(), MAIN_BALL_OUTLINE_COLOR, 5);
 //        }
-
-
+//
+//
 ////DRAWTEXT
 //        if(FLAG_DEBUGANGLE_IN_CENTER)
 //            drawText(overlayMat, "("+_1A+""+")", VISION_WIDTH/2-40, VISION_WIDTH/2);
@@ -318,18 +323,18 @@ public class RingDetection implements FrameProcessor {
 //        }
 
 //OUTPUT TO SMARTDASHBOARD
-//        if(FLAG_SMARTDASHBOARD){//TODO: Do something else here now
-//        }
+        if(FLAG_SMARTDASHBOARD){//TODO: Do something else here now
+        }
 
-//        Imgproc.line( frameMat, new Point(VISION_WIDTH,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,255,150), 3);
-//        Imgproc.line( frameMat, new Point(0,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,255,150), 3);
+        Imgproc.line( frameMat, new Point(VISION_WIDTH,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,255,150), 3);
+        Imgproc.line( frameMat, new Point(0,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,255,150), 3);
 //        Imgproc.line( frameMat, new Point(VISION_WIDTH,VISION_WIDTH), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,0,150), 3);
 //        Imgproc.line( frameMat, new Point(VISION_WIDTH,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,0,150), 3);
 
         System.out.println( " processFrame time " + (System.currentTimeMillis() - t0) + "ms" );
 
 
-        frameMat.copyTo(overlayMat);
+//        frameMat.copyTo(overlayMat);
 
 //        frameMat.copyTo(secondMat);
 
