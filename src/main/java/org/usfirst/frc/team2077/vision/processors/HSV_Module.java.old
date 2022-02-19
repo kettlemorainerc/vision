@@ -186,7 +186,7 @@ public class HSV_Module_ implements FrameProcessor {
         // HoughCircles processing
         Imgproc.cvtColor(gray, frameMat, Imgproc.COLOR_GRAY2BGRA);
 
-        System.out.println("#rows " + circles.rows() + " #cols " + circles.cols());
+        //System.out.println("#rows " + circles.rows() + " #cols " + circles.cols());
 
 
         for (int i = 0; i < Math.min(5, circles.cols()); i++) {

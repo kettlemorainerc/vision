@@ -22,7 +22,8 @@ public class AimingOverlay implements FrameProcessor {
 //            tempMap = overlayMat.clone();
             Core.rotate(tempMap, overlayMat, Core.ROTATE_90_CLOCKWISE);//TODO: Autodetect type
         }
-        Rect rectCrop = new Rect(0,frameMat.rows()/2,frameMat.cols(),frameMat.rows()/2);
+//        Rect rectCrop = new Rect(0,frameMat.rows()/2,frameMat.cols(),frameMat.rows()/2);
+        Rect rectCrop = new Rect(0,frameMat.rows(),frameMat.cols(),frameMat.rows());
         if(HSV_Module.FLAG_CROPPING_VISION_INPUT_DEBUGGING){
             System.out.println("rectCrop.x = "+rectCrop.x);
             System.out.println("rectCrop.y = "+rectCrop.y);
@@ -32,8 +33,8 @@ public class AimingOverlay implements FrameProcessor {
             System.out.println("framemat.row = "+frameMat.rows());
         }
 
-        Mat image_output = frameMat.submat(rectCrop);
-        frameMat = image_output;
+//        Mat image_output = frameMat.submat(rectCrop);
+//        frameMat = image_output;
 
         Scalar red = new Scalar(0,0,255,255);
         Scalar green = new Scalar(0,255,0,255);
@@ -96,12 +97,12 @@ public class AimingOverlay implements FrameProcessor {
 //        AJ AJ_HSV_Module addition and testing code
 //        TODO: Change to nte check
         if(true){
-            Ball[] foundBallLocations = HSV_Module.findBallLocations(frameMat, overlayMat);
+//            Ball[] foundBallLocations = HSV_Module.findBallLocations(frameMat, overlayMat);
 
 //            System.out.print("findBallLocations = ");
 //            for(Ball ball: foundBallLocations){
-//
 //            }
+            HoopVision.findReflectorLocations(frameMat.submat(new Rect(0,frameMat.rows()/2,frameMat.cols(),frameMat.rows()/2)), overlayMat);
         }
 //        frameMat.copyTo(overlayMat);
 

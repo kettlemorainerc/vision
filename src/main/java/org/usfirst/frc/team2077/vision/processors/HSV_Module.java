@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class HSV_Module implements FrameProcessor {
 
     /*           FLAGS               */
-    public static final boolean FLAG_DEBUGLINE = false;
+    public static final boolean FLAG_DEBUGLINE = true;
     public static final boolean FLAG_ISPIZZA = true;
     public static final boolean FLAG_SMARTDASHBOARD = false;
     public static final boolean FLAG_BALLTEXTLABLES = true;
@@ -59,16 +59,16 @@ public class HSV_Module implements FrameProcessor {
 
     private final static Map<String, Setting> settings_ = Setting.initializeSettings( "HSVFilter Settings",
 
-            new HSV_Module.Setting( "H min", 0, 255, 120 ),
-            new HSV_Module.Setting( "H max", 0, 255, 150 ),
-            new HSV_Module.Setting( "S min", 0, 255, 40 ),
-            new HSV_Module.Setting( "S max", 0, 255, 255 ),
-            new HSV_Module.Setting( "V min", 0, 255, 85 ),
-            new HSV_Module.Setting( "V max", 0, 255, 255 ),
+            new HSV_Module.Setting( "H min", 0, 255, 120 ), // BLUE 0, RED: 100
+            new HSV_Module.Setting( "H max", 0, 255, 150 ), // 50, 150
+            new HSV_Module.Setting( "S min", 0, 255, 126 ), // 104, 136
+            new HSV_Module.Setting( "S max", 0, 255, 255 ), // 255, 255
+            new HSV_Module.Setting( "V min", 0, 255, 56 ),  // 23, 119
+            new HSV_Module.Setting( "V max", 0, 255, 255 ), //255, 255
             new HSV_Module.Setting( "R min", 0, 255, 30 ),
             new HSV_Module.Setting( "R max", 0, 255, 130 ),
             new HSV_Module.Setting( "Threshold", 0, 255, 65 ),
-            new HSV_Module.Setting("Alliance",0,1,0, "Red", "Blue"));
+            new HSV_Module.Setting("Alliance",0,1,1, "Red", "Blue"));
 
     public static class Setting {
 
@@ -186,15 +186,20 @@ public class HSV_Module implements FrameProcessor {
         Imgproc.GaussianBlur(hsv, hsv, new Size(5, 5), 1);
         // Core.inRange(hsv, new Scalar(27, 75, 120), new Scalar(31, 255, 255), hsv);
         Core.inRange(hsv, new Scalar(
-                        settings_.get("Alliance").value() * 120,
-//                        settings_.get("H min").value(),
-                        settings_.get("S min").value(),
-                        settings_.get("V min").value()),
+                (settings_.get("Alliance").value() == 0? 0  : 100), // HMin
+                (settings_.get("Alliance").value() == 0? 92: 136), // SMin
+                (settings_.get("Alliance").value() == 0? 64 : 119)), // HVMin
+////                        settings_.get("Alliance").value() * 115 + 0,
+//                        settings_.get("H min").value() ,
+//                        settings_.get("S min").value(),
+//                        settings_.get("V min").value()),
                 new Scalar(
+                        (settings_.get("Alliance").value() == 0? 50 : 150),
+                        255,
+                        255), gray);
 //                        settings_.get("H max").value(),
-                        settings_.get("Alliance").value() * 120 + 30,
-                        settings_.get("S max").value(),
-                        settings_.get("V max").value()), gray);
+//                        settings_.get("S max").value(),
+//                        settings_.get("V max").value()), gray);
 
         // Imgproc.GaussianBlur(gray, gray, new Size(20, 20), 1);
         Imgproc.GaussianBlur(gray, gray, new Size(25, 25), 0, 0);
@@ -236,7 +241,7 @@ public class HSV_Module implements FrameProcessor {
         // HoughCircles processing
         Imgproc.cvtColor(gray, frameMat, Imgproc.COLOR_GRAY2BGRA);
 
-        System.out.println("#rows " + circles.rows() + " #cols " + circles.cols());
+//        System.out.println("#rows " + circles.rows() + " #cols " + circles.cols());
 
 
         for (int i = 0; i < Math.min(5, circles.cols()); i++) {
@@ -267,20 +272,29 @@ public class HSV_Module implements FrameProcessor {
 
         ballsList.sort(Comparator.reverseOrder());
         Ball[] balls = new Ball[ballsList.size()];
-        if(FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
+//        if(FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
         for(int i = 0; i<ballsList.size(); i++){
             balls[i] = ballsList.get(i);
             if(FLAG_DEBUG_ALL_BALLS_INFO){
+
                 Ball tempBall = balls[i];
-                System.out.println("> Ball #["+i+"]");
-                System.out.println("    |-(r)-> "+tempBall.radius());
-                System.out.println("    |-(a)-> "+tempBall.angle());
+
+//                System.out.println("> Ball #["+i+"]");
+//                System.out.println("    |-(r)-> "+tempBall.radius());
+                double angle = tempBall.angle();
+
+//                double angleT = Ball.getAngle(tempBall.x(), tempBall.y() - tempBall.radius());
+//                double angleB = Ball.getAngle(tempBall.x(), tempBall.y() + tempBall.radius());
+
+                System.out.println(21.5 * Math.tan(Math.toRadians(90 + angle)));
+//                System.out.println(14.5 * Math.tan(Math.toRadians(90 + angleT)));
+                System.out.println("    |-(a)-> "+ angle);
                 System.out.println("    |-(x)-> "+tempBall.x());
                 System.out.println("    \\-(y)-> "+tempBall.y());
-                System.out.println();
+//                System.out.println();
             }
         }
-        if(FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
+//        if(FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
 
 
         for (int i = 0; i < Math.min(5, circles.cols()); i++) {
@@ -374,7 +388,7 @@ public class HSV_Module implements FrameProcessor {
 //        Imgproc.line( frameMat, new Point(VISION_WIDTH,VISION_WIDTH), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,0,150), 3);
 //        Imgproc.line( frameMat, new Point(VISION_WIDTH,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,0,150), 3);
 
-        System.out.println( " processFrame time " + (System.currentTimeMillis() - t0) + "ms" );
+//        System.out.println( " processFrame time " + (System.currentTimeMillis() - t0) + "ms" );
 
 
 //        frameMat.copyTo(overlayMat);
