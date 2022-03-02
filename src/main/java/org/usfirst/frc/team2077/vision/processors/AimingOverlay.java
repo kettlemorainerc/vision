@@ -3,6 +3,7 @@ package org.usfirst.frc.team2077.vision.processors;
 import java.util.Map;
 import java.util.TreeMap;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.usfirst.frc.team2077.vision.Main.FrameProcessor;
@@ -13,6 +14,8 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 public class AimingOverlay implements FrameProcessor {
 
     private Map<String,NetworkTableEntry> nte_ = new TreeMap<>();
+    private final static String BALL_ANGLE_KEY = "ball_angle";
+    private final static String BALL_DISTANCE_KEY = "ball_distance";
 
     @Override
     public void processFrame( Mat frameMat, Mat overlayMat ) {
@@ -59,53 +62,31 @@ public class AimingOverlay implements FrameProcessor {
                 Imgproc.line( overlayMat, new Point(0, (int)y), new Point(cols, (int)y), white, 1);
             }
         }
-        if ( (nte = getNTE("Position")) != null ) {
-            double[] position = nte.getDoubleArray(new double[0]);
-            if (position != null && position.length >= 3) {
-                String location = "Location:" + (Math.round(position[0]*10.)/10.) + "N " + (Math.round(position[1]*10.)/10.) + "E";
-                String heading = "Heading:" + (Math.round(position[2]*10.)/10.);
-                drawText(overlayMat, location, 20, rows/2-80);
-                drawText(overlayMat, heading, 20, rows/2-40);
-            }
-        }
 
-        if ( (nte = getNTE("setPointShoot")) != null ) {
-            double setPoint = nte.getDouble(0);
-            if (setPoint >= 0) {
-                String setPointS = "SetPoint:" + (Math.round(setPoint*10.)/10.);
-                drawText(overlayMat, setPointS, 20, rows/2+80);
-            }
-        }
 
-        if ( (nte = getNTE("RangeAV")) != null ) {
-            double[] rangeAV = nte.getDoubleArray(new double[]{0, 0});
-
-            String angle = "Angles:" + (Math.round(rangeAV[0] *100.)/100.);
-            drawText(overlayMat, angle, 20, rows/2+35);
-
-            String velocity = "Velocity:" + Math.round(rangeAV[1]);
-            drawText(overlayMat, velocity, 20, rows/2 - 6);
-        }
-//        System.out.println(nte);
-
-        if ( (nte = getNTE("ReadyShoot")) != null ) {
-            boolean ready = nte.getBoolean(false);
-            drawText(overlayMat, "Shoot?: ", 20, rows/2+160);
-            Imgproc.circle(overlayMat, new Point(155, rows/2+150), 5, ready ? green : red, 9);
-        }
+//        if ( (nte = getNTE("setPointShoot")) != null ) {
+//            double setPoint = nte.getDouble(0);
+//            if (setPoint >= 0) {
+//                String setPointS = "SetPoint:" + (Math.round(setPoint*10.)/10.);
+//                drawText(overlayMat, setPointS, 20, rows/2+80);
+//            }
+//        }
 
 //        AJ AJ_HSV_Module addition and testing code
 //        TODO: Change to nte check
         if(true){
-//            Ball[] foundBallLocations = HSV_Module.findBallLocations(frameMat, overlayMat);
+            int frameRow = frameMat.rows(), frameCol = frameMat.cols();
+            Ball[] foundBallLocations = HSV_Module.findBallLocations(frameMat.submat(new Rect(0, (int) (frameCol * 0.6), frameRow, (int) (frameCol * 0.4) )), overlayMat);
+
+//            SmartDashboard.getEntry(BALL_ANGLE_KEY).setDouble(foundBallLocations[0].angleHoriz());
+//            SmartDashboard.getEntry(BALL_DISTANCE_KEY).setDouble(foundBallLocations[0].distance());
 
 //            System.out.print("findBallLocations = ");
 //            for(Ball ball: foundBallLocations){
 //            }
-            HoopVision.findReflectorLocations(frameMat.submat(new Rect(0,frameMat.rows()/2,frameMat.cols(),frameMat.rows()/2)), overlayMat);
+//            HoopVision.findReflectorLocations(frameMat.submat(new Rect(0, 0, frameRow, (int) (frameCol * 1))), overlayMat);
         }
 //        frameMat.copyTo(overlayMat);
-
     }
 
     private void drawText(Mat mat, String text, double x, double y) {

@@ -30,7 +30,7 @@ public class HSV_Module implements FrameProcessor {
     public static final boolean FLAG_BALLTEXTLABLES = true;
     public static final boolean FLAG_DEBUGANGLE_IN_CENTER = false;//TODO: Make changeable
     public static final boolean FLAG_CROPPING_VISION_INPUT_DEBUGGING = false;
-    public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = true;
+    public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = false;
 
 
     /* START CONSTENTS */
@@ -279,16 +279,9 @@ public class HSV_Module implements FrameProcessor {
 
                 Ball tempBall = balls[i];
 
-//                System.out.println("> Ball #["+i+"]");
-//                System.out.println("    |-(r)-> "+tempBall.radius());
-                double angle = tempBall.angle();
-
-//                double angleT = Ball.getAngle(tempBall.x(), tempBall.y() - tempBall.radius());
-//                double angleB = Ball.getAngle(tempBall.x(), tempBall.y() + tempBall.radius());
-
-                System.out.println(21.5 * Math.tan(Math.toRadians(90 + angle)));
-//                System.out.println(14.5 * Math.tan(Math.toRadians(90 + angleT)));
-                System.out.println("    |-(a)-> "+ angle);
+                System.out.println("> Ball #["+i+"]");
+                System.out.println("    |-(r)-> "+tempBall.radius());
+                System.out.println("    |-(a)-> "+ tempBall.angleHoriz());
                 System.out.println("    |-(x)-> "+tempBall.x());
                 System.out.println("    \\-(y)-> "+tempBall.y());
 //                System.out.println();
@@ -325,9 +318,9 @@ public class HSV_Module implements FrameProcessor {
         double _3A = 0.0;
 //Will compute angle from North center
 
-        _1A = (balls.length > 0 && balls[0] != null)? balls[0].angle() : -1;
-        _2A = (balls.length > 1 && balls[1] != null)? balls[1].angle() : -1;
-        _3A = (balls.length > 2 && balls[2] != null)? balls[2].angle() : -1;
+        _1A = (balls.length > 0 && balls[0] != null)? balls[0].angleHoriz() : -1;
+        _2A = (balls.length > 1 && balls[1] != null)? balls[1].angleHoriz() : -1;
+        _3A = (balls.length > 2 && balls[2] != null)? balls[2].angleHoriz() : -1;
 
 
 //        FILL the MAIN ball
@@ -355,8 +348,7 @@ public class HSV_Module implements FrameProcessor {
 
 
 //DRAWTEXT
-        if(FLAG_DEBUGANGLE_IN_CENTER)
-            drawText(overlayMat, "("+_1A+""+")", VISION_WIDTH/2-40, VISION_WIDTH/2);
+        if(FLAG_DEBUGANGLE_IN_CENTER) drawText(overlayMat, "("+(int) _1A+""+")", (VISION_WIDTH * 0.5)-40, VISION_WIDTH * 0.5);
 
         try{//TODO: Should I keep this or just make everything it's .length? Also kinda on a time crunch
 //            if(balls[0].radius() > 0 && FLAG_BALLTEXTLABLES){
@@ -368,7 +360,7 @@ public class HSV_Module implements FrameProcessor {
 //                }
 //            }
             if(balls[0].radius() > 0 && FLAG_BALLTEXTLABLES){
-                drawText(overlayMat, balls[0].angle()+"", balls[0].x()-(balls[0].radius()/2), balls[0].y());
+                drawText(overlayMat, balls[0].angleHoriz()+"", balls[0].x()-(balls[0].radius()/2), balls[0].y());
                 if(balls[1].radius() > 0) {
                     drawText(overlayMat, "[2]", balls[1].x()-(balls[1].radius()/2), balls[1].y());
                     if(balls[2].radius() > 0)

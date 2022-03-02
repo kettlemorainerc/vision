@@ -25,7 +25,7 @@ public class HoopVision implements FrameProcessor {
 
     /*           FLAGS               */
     public static final boolean FLAG_DEBUGLINE = true;
-    public static final boolean FLAG_ISPIZZA = true;
+    public static final boolean FLAG_ISPIZZA = false;
     public static final boolean FLAG_SMARTDASHBOARD = false;
     public static final boolean FLAG_BALLTEXTLABLES = true;
     public static final boolean FLAG_DEBUGANGLE_IN_CENTER = false;//TODO: Make changeable
@@ -34,13 +34,15 @@ public class HoopVision implements FrameProcessor {
 
 
     /* START CONSTENTS */
-    public static final int VISION_WIDTH = 1_000;//TODO: implement get rows or colloms
+    public static final int VISION_WIDTH = 1_000;//TODO: implement get rows or coloums
     public static final int VISION_DEGREES = 90;
 
     private static double horizPixels = Math.sqrt(VISION_WIDTH * 2);
     private static double focalLength = 334;//Was 334.0;
     private static double anglePerPixel = horizPixels/focalLength;
-    private static double hoopHeight = 27 - 26;//264.16cm is the height of the hoop, (43.18cm) is the height of camera from ground. There are 156.21cm in 1 Masha
+    private static double hoopHeight = 31 - 27;//264.16cm is the height of the hoop, (43.18cm) is the height of camera from ground. There are 156.21cm in 1 Masha
+//                          TODO: Add the hoop radius to distance caluclations
+//    private static double hoopRadius
 
 
 
@@ -73,7 +75,8 @@ public class HoopVision implements FrameProcessor {
             new HoopVision.Setting( "V max", 0, 255, 255 ), //255, 255
             new HoopVision.Setting( "A min", 0, 1000, 50 ),
             new HoopVision.Setting( "A max", 0, Integer.MAX_VALUE, 150 ),
-            new HoopVision.Setting( "Threshold", 0, 100, 65 ));
+            new HoopVision.Setting( "Threshold", 0, 100, 65 ),
+            new HoopVision.Setting( "FocalLength", 300, 550, 473 ));
 //            new HoopVision.Setting("Alliance",0,1,1, "Red", "Blue"));
 
     public static class Setting {
@@ -224,7 +227,7 @@ public class HoopVision implements FrameProcessor {
         Imgproc.cvtColor(gray, frameMat, Imgproc.COLOR_GRAY2BGRA);//@@@
 
 //        Mat rectangles = new Mat();
-        gray.copyTo(overlayMat);
+//        gray.copyTo(overlayMat);
 
 //        double cannyThreshhold = 10;
 //        int[] circleSizeRange = {settings_.get("R min").value(), settings_.get("R max").value()};
@@ -267,7 +270,7 @@ public class HoopVision implements FrameProcessor {
 ////        System.out.println("#rows " + circles.rows() + " #cols " + circles.cols());
 //
 //
-        Imgproc.line( frameMat, new Point( 0, VISION_WIDTH/2), new Point(VISION_WIDTH, VISION_WIDTH/2), COLOR_DEBUG_MIDLINE, 3);
+//        Imgproc.line( frameMat, new Point( 0, VISION_WIDTH/2), new Point(VISION_WIDTH, VISION_WIDTH/2), COLOR_DEBUG_MIDLINE, 3);
 
         int highestPoint = VISION_WIDTH;
 
@@ -279,16 +282,17 @@ public class HoopVision implements FrameProcessor {
                 double ratio = area / (boundRect.width * boundRect.height);
 
                 if (ratio >= settings_.get("Threshold").value() * 0.01) {
-                    double centerY = boundRect.y + (boundRect.height / 2);
-                    double centerX = boundRect.x + (boundRect.width / 2);
+                    double centerY = boundRect.y + (boundRect.height * 0.5);
+                    double centerX = boundRect.x + (boundRect.width * 0.5);
 
                     highestPoint = Math.min(highestPoint, (int) centerY);
+                    Imgproc.circle(overlayMat, new Point(centerX, centerY), 40, ALL_OVERLAYMAT_BALL_OUTLINE, 3);
                     Imgproc.circle(frameMat, new Point(centerX, centerY), 40, ALL_OVERLAYMAT_BALL_OUTLINE, 3);
                 }
             }
         }
 
-        double angle = Math.abs((VISION_WIDTH * 0.5 - highestPoint) * anglePerPixel);
+        double angle = Math.abs((VISION_WIDTH * 0.5 - highestPoint) * horizPixels/(settings_.get("FocalLength").value()));
         double distance = hoopHeight / Math.tan(Math.toRadians(angle));
 
 

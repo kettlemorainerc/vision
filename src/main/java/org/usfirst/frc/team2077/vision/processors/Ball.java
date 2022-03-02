@@ -4,62 +4,63 @@ import org.opencv.core.Point;
 
 public class Ball implements Comparable<Ball>{
 
-    private int x = -1, y = -1, r = -1;
-    private double a = -1.0;
+    private int x, y, r = -1;
+    private double ah = 0.0, av = 0.0;
 
     private static double width = HSV_Module.VISION_WIDTH;
     private static double horizPixels = Math.sqrt(width * 2);
     private static double focalLength = 321;//334.0;
     private static double anglePerPixel = horizPixels/focalLength;
 
+    private static double heightFromBall = 2; //TODO, set to robot camera height - ball radius/2
+
 
     public Ball(){
-        x = 0;
-        y = 0;
         r = 0;
-        a = 0.0;
     }
 
     public Ball(int x_, int y_){
         x = x_;
         y = y_;
-        a = getAngle(x,y);
+        ah = getAngle(x);
+        av = getAngle(y);
     }
 
     public Ball(int x_, int y_, int r_) {
         x = x_;
         y = y_;
         r = r_;
-        a = getAngle(x,y);
+        ah = getAngle(x);
+        av = getAngle(y);
     }
     public Ball(int x_, int y_, int r_, double a_) {
         x = x_;
         y = y_;
         r = r_;
-        a = a_;
+        ah = a_;
+        av = getAngle(y);
     }
 
     public final Point point(){//YES, I know that this should be getPoint
         return new Point(x,y);
     }
-    public final double angle(){
-        return a;
+    public final double angleVert(){
+        return av;
     }
+    public final double angleHoriz(){ return ah; }
     public final int radius(){ return r; }
     public final int x(){ return x; }
     public final int y(){ return y; }
+    public final double distance(){ return getDistance(av);}
 
 
-    public static double getAngle(int x_, int y_){
-
-//        int returnDeg = (int) Math.toDegrees(Math.atan(x_-500/(y_/2)));
-//        return (returnDeg != -90.0)? returnDeg:0.0;
-        return (width/2.0 - y_) * anglePerPixel;
-
+    public static double getAngle(int coord_){
+        return (width * 0.5 - coord_) * anglePerPixel;
     }
 
-
-
+    public static double getDistance(double av_){
+        return heightFromBall * Math.tan(Math.toRadians(90 + av_));
+    }
 
 
     @Override
