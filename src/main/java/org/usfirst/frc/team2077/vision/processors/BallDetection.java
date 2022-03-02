@@ -21,54 +21,26 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This class is the replacement of the HSVFilter_MERGED which now is being deprecated. The goal is to
  * switch the filter to a more external process which can be called static-aly.
  */
-public class HoopVisionTesting implements FrameProcessor {
-
-    /*           FLAGS               */
-    public static final boolean FLAG_DEBUGLINE = false;
-    public static final boolean FLAG_ISPIZZA = false;
-    public static final boolean FLAG_SMARTDASHBOARD = false;
-    public static final boolean FLAG_BALLTEXTLABLES = false;
-    public static final boolean FLAG_DEBUGANGLE_IN_CENTER = false;//TODO: Make changeable
-    public static final boolean FLAG_CROPPING_VISION_INPUT_DEBUGGING = false;
-    public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = false;
-
+public class BallDetection implements FrameProcessor {
 
     /* START CONSTENTS */
     public static final int VISION_WIDTH = 1_000;//TODO: implement get rows or colloms
     public static final int VISION_DEGREES = 90;
 
 
-    //COLORS
-    public static final Scalar RED = new Scalar(0,0,255,255);
-    public static final Scalar GREEN = new Scalar(0,255,0,255);
-    public static final Scalar WHITE = new Scalar(255,255,255,255);
-    public static final Scalar GREY = new Scalar(180,180,180,255);
-    public static final Scalar BLACK = new Scalar(0,0,0,255);
-    public static final Scalar PURPLELY = new Scalar(255, 0, 255, 255);
-    //    public static final Scalar BLOOD_ORANGE = new Scalar(255, 93, 64, 255);
-    public static final Scalar BLOOD_ORANGE = new Scalar(93, 64, 255, 120);
-    //USED COLORS
-    public static final Scalar COLOR_DEBUG_MIDLINE = GREY;
-    public static final Scalar MAIN_BALL_FILL_COLOR = PURPLELY;
-    public static final Scalar MAIN_BALL_OUTLINE_COLOR = GREEN;
-    public static final Scalar BALL_FILL_COLOR = BLOOD_ORANGE;
-    public static final Scalar FRAMEMAT_BALL_OUTLINE = GREY;//new Scalar(0, 0, 255, 64);
-    public static final Scalar OVERLAYMAT_BALL_OUTLINE = BLOOD_ORANGE;// new Scalar(0, 0, 255, 128);
-    public static final Scalar ALL_OVERLAYMAT_BALL_OUTLINE = BLACK;
-    /* END CONSTENTS */
-
     private final static Map<String, Setting> settings_ = Setting.initializeSettings( "HSVFilter Settings",
 
-            new HoopVisionTesting.Setting( "H min", 0, 255, 120 ),
-            new HoopVisionTesting.Setting( "H max", 0, 255, 150 ),
-            new HoopVisionTesting.Setting( "S min", 0, 255, 40 ),
-            new HoopVisionTesting.Setting( "S max", 0, 255, 255 ),
-            new HoopVisionTesting.Setting( "V min", 0, 255, 85 ),
-            new HoopVisionTesting.Setting( "V max", 0, 255, 255 ),
-//            new HoopVisionTesting.Setting( "R min", 0, 255, 30 ),
-//            new HoopVisionTesting.Setting( "R max", 0, 255, 130 ),
-            new HoopVisionTesting.Setting( "Threshold", 0, 255, 65 )
-    );
+            new BallDetection.Setting( "H min", 0, 255, 120 ),
+            new BallDetection.Setting( "H max", 0, 255, 150 ),
+            new BallDetection.Setting( "S min", 0, 255, 40 ),
+            new BallDetection.Setting( "S max", 0, 255, 255 ),
+            new BallDetection.Setting( "V min", 0, 255, 85 ),
+            new BallDetection.Setting( "V max", 0, 255, 255 ),
+            new BallDetection.Setting( "R min", 0, 255, 30 ),
+            new BallDetection.Setting( "R max", 0, 255, 130 ),
+            new BallDetection.Setting( "Threshold", 0, 255, 65 ));
+//            new BallDetection.Setting("Alliance", "Red", "Blue", true));
+//            new BallDetection.Setting("Alliance", 0,1,0,"Red", "Blue"));
 
     public static class Setting {
 
@@ -96,6 +68,42 @@ public class HoopVisionTesting implements FrameProcessor {
                 }
             } );
         }
+//        public Setting( String name, String onName, String offName, boolean state ) {
+        public Setting( String name, int min, int max, int value, String onName, String offName ) {
+            name_ = name;
+            onName_ = onName;
+            offName_ = offName;
+            value_ = new AtomicInteger( value );
+            nameLabel_ = new JLabel( name );
+//            valueLabel_ = new JLabel( "" + (value_.get()==1? onName:offName) );
+//            checkBox_ = new JCheckBox( "" + (value_.get()==1? onName:offName));
+            slider_ = new JSlider( min, max, value );
+            checkBox_.addChangeListener( new ChangeListener() {
+                @Override
+                public void stateChanged( ChangeEvent e ) {
+                    value_.set( slider_.getValue()/*(value_.equals(0)?1:0)*/ );
+                    valueLabel_.setText( "" + (value_.get()==1? onName:offName) );
+                }
+            } );
+        }
+//        public Setting( String name, String offName, String onName, boolean state ) {
+//            name_ = state? onName:offName;
+//            onName_ = onName;
+//            offName_ = offName;
+//            value_ = new AtomicInteger( (int) ((state)?0:1) );
+//            nameLabel_ = new JLabel( name );
+//            valueLabel_ = new JLabel( "" + (value_.get()==1? onName_:offName_) );
+////            valueLabel_ = new JLabel( "" + value_.get() );
+////            checkBox_ = new JCheckBox( );
+//            slider_ = new JSlider( 0, 1, value_.get());
+//            slider_.addChangeListener( new ChangeListener() {
+//                @Override
+//                public void stateChanged( ChangeEvent e ) {
+//                    value_.set( slider_.getValue() );//store boolean as atomic integer to keep variables similar
+//                    valueLabel_.setText( "" + value_.get());//(value_.get()==1? onName_:offName_ ));
+//                }
+//            } );
+//        }
 
         public int value() {
             return value_.get();
@@ -129,7 +137,7 @@ public class HoopVisionTesting implements FrameProcessor {
         }
     }
 
-    public static void findBallLocations(Mat frameMat, Mat overlayMat) {
+    public static Ball[] findBallLocations(Mat frameMat, Mat overlayMat) {
 
         Map<String, NetworkTableEntry> nte_ = new TreeMap<>();
 
@@ -137,7 +145,7 @@ public class HoopVisionTesting implements FrameProcessor {
         Mat hsv = new Mat();
         Mat gray = new Mat();
 
-//        List<Ball> ballsList = new LinkedList<Ball>();//TODO: Care about under center
+        List<Ball> ballsList = new LinkedList<Ball>();//TODO: Care about under center
 //        List<Ball> ballsList = new LinkedList<Ball>();
 
         long t0 = System.currentTimeMillis();
@@ -152,11 +160,13 @@ public class HoopVisionTesting implements FrameProcessor {
         Imgproc.GaussianBlur(hsv, hsv, new Size(5, 5), 1);
         // Core.inRange(hsv, new Scalar(27, 75, 120), new Scalar(31, 255, 255), hsv);
         Core.inRange(hsv, new Scalar(
-                        settings_.get("H min").value(),
+                        1 * 120,
+//                        settings_.get("H min").value(),
                         settings_.get("S min").value(),
                         settings_.get("V min").value()),
                 new Scalar(
-                        settings_.get("H max").value(),
+//                        settings_.get("H max").value(),
+                        0 * 120 + 30,
                         settings_.get("S max").value(),
                         settings_.get("V max").value()), gray);
 
@@ -172,9 +182,9 @@ public class HoopVisionTesting implements FrameProcessor {
         Mat circles = new Mat();
 
         double cannyThreshhold = 10;
-//        int[] circleSizeRange = {settings_.get("R min").value(), settings_.get("R max").value()};
-//        int circleProximity = 2 * circleSizeRange[0];
-//        double circleThreshold = settings_.get("Threshold").value();
+        int[] circleSizeRange = {settings_.get("R min").value(), settings_.get("R max").value()};
+        int circleProximity = 2 * circleSizeRange[0];
+        double circleThreshold = settings_.get("Threshold").value();
         int accumulatorScale = 2;
 
         // gray 8-bit, single-channel, grayscale input image.
@@ -195,14 +205,16 @@ public class HoopVisionTesting implements FrameProcessor {
         // circleSizeRange[0] Minimum circle radius.
         // circleSizeRange[1] Maximum circle radius.
 
-        ///TODO: Replace with
-//        Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, accumulatorScale, circleProximity, cannyThreshhold, circleThreshold, circleSizeRange[0], circleSizeRange[1]);
+//        Imgproc.findContours
+//        Imgproc.findContours(gray, circles, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, accumulatorScale, circleProximity, cannyThreshhold, circleThreshold, circleSizeRange[0], circleSizeRange[1]);
 
         // Imgproc.Canny(gray, gray, Math.max(1, cannyThreshhold/2), cannyThreshhold); // approximates internal
         // HoughCircles processing
         Imgproc.cvtColor(gray, frameMat, Imgproc.COLOR_GRAY2BGRA);
 
-        System.out.println("#rows " + circles.rows() + " #cols " + circles.cols());
+//        System.out.println("#rows " + circles.rows() + " #cols " + circles.cols());
 
 
         for (int i = 0; i < Math.min(5, circles.cols()); i++) {
@@ -213,56 +225,47 @@ public class HoopVisionTesting implements FrameProcessor {
             int r = (int) data[2];
 
 
-//            if(FLAG_DEBUGLINE)Imgproc.line( overlayMat, new Point(0,VISION_WIDTH), new Point(VISION_WIDTH, VISION_WIDTH), COLOR_DEBUG_MIDLINE, 3);
-//            if(y >= VISION_WIDTH/2){
-//                Point center = new Point(x, y);
-//                System.out.println("CIRCLE " + i + " " + center + " " + r);
-//
-//                NetworkTableInstance.getDefault().getEntry("ball").setDoubleArray(new double[]{x, y, (double) r});
-//
-//
-//                // all circle outline
-//                Imgproc.circle(frameMat, center, (int)r, ALL_OVERLAYMAT_BALL_OUTLINE, 3);
-//                Imgproc.circle(overlayMat, center, (int)r, ALL_OVERLAYMAT_BALL_OUTLINE, 3);
-//            }
-//
-//            ballsList.add(new Ball(x,y+frameMat.rows(),r));
+            if(DisplayOverlay.FLAG_DEBUGLINE)Imgproc.line( overlayMat, new Point(0,VISION_WIDTH), new Point(VISION_WIDTH, VISION_WIDTH), DisplayOverlay.COLOR_DEBUG_MIDLINE, 3);
+            if(y >= VISION_WIDTH/2){
+                Point center = new Point(x, y);
+                System.out.println("CIRCLE " + i + " " + center + " " + r);
+
+                NetworkTableInstance.getDefault().getEntry("ball").setDoubleArray(new double[]{x, y, (double) r});
+
+                // all circle outline
+                Imgproc.circle(frameMat, center, (int)r, DisplayOverlay.ALL_OVERLAYMAT_BALL_OUTLINE, 3);
+                Imgproc.circle(overlayMat, center, (int)r, DisplayOverlay.ALL_OVERLAYMAT_BALL_OUTLINE, 3);
+            }
+
+            ballsList.add(new Ball(x,y+frameMat.rows(),r));
         }
 
-//        ballsList.sort(Comparator.reverseOrder());
-//        Ball[] balls = new Ball[ballsList.size()];
-//        if(FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
-//        for(int i = 0; i<ballsList.size(); i++){
-//            balls[i] = ballsList.get(i);
-//            if(FLAG_DEBUG_ALL_BALLS_INFO){
-//                Ball tempBall = balls[i];
-//                System.out.println("> Ball #["+i+"]");
-//                System.out.println("    |-(r)-> "+tempBall.radius());
-//                System.out.println("    |-(a)-> "+tempBall.angle());
-//                System.out.println("    |-(x)-> "+tempBall.x());
-//                System.out.println("    \\-(y)-> "+tempBall.y());
-//                System.out.println();
-//            }
-//        }
+        ballsList.sort(Comparator.reverseOrder());
+        Ball[] balls = new Ball[ballsList.size()];
+        if(DisplayOverlay.FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
+        for(int i = 0; i<ballsList.size(); i++){
+            balls[i] = ballsList.get(i);
+            if(DisplayOverlay.FLAG_DEBUG_ALL_BALLS_INFO){
+                Ball tempBall = balls[i];
+                System.out.println("> Ball #["+i+"]");
+                System.out.println("    |-(r)-> "+tempBall.radius());
+                System.out.println("    |-(a)-> "+tempBall.angle());
+                System.out.println("    |-(x)-> "+tempBall.x());
+                System.out.println("    \\-(y)-> "+tempBall.y());
+                System.out.println();
+            }
+        }
+        if(DisplayOverlay.FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
 
-        if(FLAG_DEBUG_ALL_BALLS_INFO){System.out.println("========================");}
 
+        for (int i = 0; i < Math.min(5, circles.cols()); i++) {
 
-//        for (int i = 0; i < Math.min(5, circles.cols()); i++) {
-//
-//            double[] presentCiricleData = circles.get(0, i);
-//
-//            double x = presentCiricleData[0];
-//            double y = presentCiricleData[1];
-//            int r = (int) presentCiricleData[2];
-//
-////            SUPER QUICK CODE - WILL BE CHANGED LATER
-////            if(presentCiricleData[3] != 0.0){//Ignore if not existing
-////            if(presentCiricleData[1] < (VISION_WIDTH/2)){//Ignore if above center
-//            if(presentCiricleData[1] >= (VISION_WIDTH/2)){//Ignore if above center
-//
-//            }
-//        }
+            double[] presentCiricleData = circles.get(0, i);
+
+            double x = presentCiricleData[0];
+            double y = presentCiricleData[1];
+            int r = (int) presentCiricleData[2];
+        }
 //SEND THE THREE CLOSET BALLS
 /*          Description = networktablename
             Ball Closest = ball1
@@ -276,54 +279,62 @@ public class HoopVisionTesting implements FrameProcessor {
         double _3A = 0.0;
 //Will compute angle from North center
 
-//        _1A = (balls.length > 0 && balls[0] != null)? balls[0].angle() : -1;
-//        _2A = (balls.length > 1 && balls[1] != null)? balls[1].angle() : -1;
-//        _3A = (balls.length > 2 && balls[2] != null)? balls[2].angle() : -1;
+        _1A = (balls.length > 0 && balls[0] != null)? balls[0].angle() : -1;
+        _2A = (balls.length > 1 && balls[1] != null)? balls[1].angle() : -1;
+        _3A = (balls.length > 2 && balls[2] != null)? balls[2].angle() : -1;
 
 
 //        FILL the MAIN ball
-//        if(balls.length > 0){
-//            Imgproc.circle(frameMat, balls[0].point(), 0, MAIN_BALL_FILL_COLOR, 2*(int)(balls[0].radius()*.75));
-//            Imgproc.circle(overlayMat, balls[0].point(), 0, MAIN_BALL_FILL_COLOR, 2*(int)(balls[0].radius()*.75));
-//        }
+        if(balls.length > 0){
+            Imgproc.circle(frameMat, balls[0].point(), 0, DisplayOverlay.MAIN_BALL_FILL_COLOR, 2*(int)(balls[0].radius()*.75));
+            Imgproc.circle(overlayMat, balls[0].point(), 0, DisplayOverlay.MAIN_BALL_FILL_COLOR, 2*(int)(balls[0].radius()*.75));
+        }
 
-//        for(int i = 1; i<3 && i<balls.length; i++){
-//
-//            Point temp = balls[i].point();
-////            if(!temp.equals(new Point(_1X,_1Y))){
-//            // Circle center
-//
-//            // Circle outline
-//            Imgproc.circle(frameMat, temp, balls[i].radius(), FRAMEMAT_BALL_OUTLINE, 5);
-//            Imgproc.circle(overlayMat, temp, balls[i].radius(), OVERLAYMAT_BALL_OUTLINE, 5);
-//
-//        }
-////        HEAD CIRCLE
-//        if(balls.length > 0){
-//            Imgproc.circle(frameMat, balls[0].point(), (int) balls[0].radius(), MAIN_BALL_OUTLINE_COLOR, 5);
-//            Imgproc.circle(overlayMat, balls[0].point(), (int) balls[0].radius(), MAIN_BALL_OUTLINE_COLOR, 5);
-//        }
-//
-//
-////DRAWTEXT
-//        if(FLAG_DEBUGANGLE_IN_CENTER)
-//            drawText(overlayMat, "("+_1A+""+")", VISION_WIDTH/2-40, VISION_WIDTH/2);
-//
-//        try{//TODO: Should I keep this or just make everything it's .length? Also kinda on a time crunch
+        for(int i = 1; i<3 && i<balls.length; i++){
+
+            Point temp = balls[i].point();
+//            if(!temp.equals(new Point(_1X,_1Y))){
+            // Circle center
+
+            // Circle outline
+            Imgproc.circle(frameMat, temp, balls[i].radius(), DisplayOverlay.FRAMEMAT_BALL_OUTLINE, 5);
+            Imgproc.circle(overlayMat, temp, balls[i].radius(), DisplayOverlay.OVERLAYMAT_BALL_OUTLINE, 5);
+
+        }
+//        HEAD CIRCLE
+        if(balls.length > 0){
+            Imgproc.circle(frameMat, balls[0].point(), (int) balls[0].radius(), DisplayOverlay.MAIN_BALL_OUTLINE_COLOR, 5);
+            Imgproc.circle(overlayMat, balls[0].point(), (int) balls[0].radius(), DisplayOverlay.MAIN_BALL_OUTLINE_COLOR, 5);
+        }
+
+
+//DisplayOverlay.drawText
+        if(DisplayOverlay.FLAG_DEBUG_ANGLE_IN_CENTER)
+            DisplayOverlay.drawText(overlayMat, "("+_1A+""+")", VISION_WIDTH/2-40, VISION_WIDTH/2);
+
+        try{//TODO: Should I keep this or just make everything it's .length? Also kinda on a time crunch
 //            if(balls[0].radius() > 0 && FLAG_BALLTEXTLABLES){
-//                drawText(overlayMat, ">[1]<", balls[0].x()-(balls[0].radius()/2), balls[0].y());
+//                DisplayOverlay.drawText(overlayMat, ">[1]<", balls[0].x()-(balls[0].radius()/2), balls[0].y());
 //                if(balls[1].radius() > 0) {
-//                    drawText(overlayMat, "[2]", balls[1].x()-(balls[1].radius()/2), balls[1].y());
+//                    DisplayOverlay.drawText(overlayMat, "[2]", balls[1].x()-(balls[1].radius()/2), balls[1].y());
 //                    if(balls[2].radius() > 0)
-//                        drawText(overlayMat, "[3]", balls[2].x()-(balls[2].radius()/2), balls[2].y());
+//                        DisplayOverlay.drawText(overlayMat, "[3]", balls[2].x()-(balls[2].radius()/2), balls[2].y());
 //                }
 //            }
-//        }catch(ArrayIndexOutOfBoundsException e){
-////            Do nothing, this is going to be happening more times then not, it will run up to where it needs to
-//        }
+            if(balls[0].radius() > 0 && DisplayOverlay.FLAG_BALL_TEXT_LABELS){
+                DisplayOverlay.drawText(overlayMat, balls[0].angle()+"", balls[0].x()-(balls[0].radius()/2), balls[0].y());
+                if(balls[1].radius() > 0) {
+                    DisplayOverlay.drawText(overlayMat, "[2]", balls[1].x()-(balls[1].radius()/2), balls[1].y());
+                    if(balls[2].radius() > 0)
+                        DisplayOverlay.drawText(overlayMat, "[3]", balls[2].x()-(balls[2].radius()/2), balls[2].y());
+                }
+            }
+        }catch(ArrayIndexOutOfBoundsException e){
+//            Do nothing, this is going to be happening more times then not, it will run up to where it needs to
+        }
 
 //OUTPUT TO SMARTDASHBOARD
-        if(FLAG_SMARTDASHBOARD){//TODO: Do something else here now
+        if(DisplayOverlay.FLAG_SMARTDASHBOARD){//TODO: Do something else here now
         }
 
         Imgproc.line( frameMat, new Point(VISION_WIDTH,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,255,150), 3);
@@ -339,7 +350,7 @@ public class HoopVisionTesting implements FrameProcessor {
 //        frameMat.copyTo(secondMat);
 
 
-//        return balls;
+        return balls;
     }
 
 
@@ -353,15 +364,6 @@ public class HoopVisionTesting implements FrameProcessor {
             return nte;
         }
         return null;
-    }
-
-
-
-
-
-    private static void drawText(Mat mat, String text, double x, double y) {
-        Imgproc.putText( mat, text, new Point(x, y), Core.FONT_HERSHEY_SIMPLEX, 1, new Scalar(0,0,0,255), 2 );
-        Imgproc.putText( mat, text, new Point(x, y), Core.FONT_HERSHEY_SIMPLEX, 1, new Scalar(255,255,255,255), 1 );
     }
 
     @Override

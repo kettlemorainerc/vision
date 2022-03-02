@@ -28,6 +28,7 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
+import org.usfirst.frc.team2077.vision.processors.DisplayOverlay;
 
 /**
  * Base {@link VideoSource} implementation. Includes code to execute a startup command on a remote host as a part of the
@@ -109,8 +110,16 @@ public abstract class AbstractSource implements VideoSource {
 
         name_ = name;
 
+        try{
+            if(DisplayOverlay.FLAG_ISPIZZA && Main.getProperties().getProperty(name_+".remotePizzaPort")!=null){ Main.getProperties().setProperty(name_+".remote", Main.getProperties().getProperty(name_+".remote").substring(0,9)+Main.getProperties().getProperty(name_+".remotePizzaPort")); }
+        }catch(Exception e){
+            System.out.println("[NOT VITAL] Attempting to override remote from properties with data from FLAG_ISPIZZA was unsuccessful. Reverting to .properties control");
+            e.printStackTrace();
+        }
+
         // remote server access
         remote_ = Main.getProperties().getProperty( name_ + ".remote" );
+
         user_ = Main.getProperties().getProperty( name_ + ".user", "pi" );
         password_ = Main.getProperties().getProperty( name_ + ".password", "raspberry" );
         command_ = Main.getProperties().getProperty( name_ + ".command" );

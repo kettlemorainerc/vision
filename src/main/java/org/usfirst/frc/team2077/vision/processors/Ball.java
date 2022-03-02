@@ -7,7 +7,7 @@ public class Ball implements Comparable<Ball>{
     private int x = -1, y = -1, r = -1;
     private double a = -1.0;
 
-    private static double width = HSV_Module.VISION_WIDTH;
+    private static double width = BallDetection.VISION_WIDTH;
     private static double horizPixels = Math.sqrt(width);
     private static double focalLength = 334.0;
     private static double anglePerPixel = horizPixels/focalLength;

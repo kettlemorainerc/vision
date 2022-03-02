@@ -150,7 +150,7 @@ public class TrackerUI {
         controlPacket_ = new DatagramPacket( controlBytes_, controlBytes_.length, address_, port_ );
         controlSocket_ = new DatagramSocket();
 
-        Setting.showFrame( "HSVFilter Settings", hMin, hMax, sMin, sMax, vMin, vMax );
+        Setting.showFrame( "Vision Settings", hMin, hMax, sMin, sMax, vMin, vMax );
 
         (new Thread() {
             @Override

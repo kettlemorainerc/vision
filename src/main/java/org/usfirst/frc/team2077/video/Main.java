@@ -142,7 +142,7 @@ public class Main {
             }
         }, 10000, 10000);
 
-        videoFrame_ = new JFrame("Video");
+        videoFrame_ = new JFrame("Video Vision");
         videoFrame_.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         videoFrame_.addWindowListener(new WindowAdapter() {
             @Override
