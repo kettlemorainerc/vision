@@ -111,7 +111,11 @@ public abstract class AbstractSource implements VideoSource {
         name_ = name;
 
         try{
-            if(DisplayOverlay.FLAG_ISPIZZA && Main.getProperties().getProperty(name_+".remotePizzaPort")!=null){ Main.getProperties().setProperty(name_+".remote", Main.getProperties().getProperty(name_+".remote").substring(0,9)+Main.getProperties().getProperty(name_+".remotePizzaPort")); }
+            if(DisplayOverlay.FLAG_ISPIZZA && Main.getProperties().getProperty(name_+".remotePizzaPort")!=null){
+                Main.getProperties().setProperty(name_+".remote", Main.getProperties().getProperty(name_+".remote").substring(0,9)+Main.getProperties().getProperty(name_+".remotePizzaPort"));
+                System.out.println(">>>>>>>>>>>>>>>>>>>>>>>"+Main.getProperties().getProperty(name_+".remote").substring(0,9)+Main.getProperties().getProperty(name_+".remotePizzaPort"));
+//                Main.getProperties().setProperty(name_+".rotate", "45");//Main.getProperties().getProperty("AimingView"+".rotatePizza"));//TODO, MAKE THIS WORK
+            }
         }catch(Exception e){
             System.out.println("[NOT VITAL] Attempting to override remote from properties with data from FLAG_ISPIZZA was unsuccessful. Reverting to .properties control");
             e.printStackTrace();
@@ -126,6 +130,8 @@ public abstract class AbstractSource implements VideoSource {
         if ( user_ != null && remote_ != null && command_ != null ) {
             System.out.println( "INFO:" + name_ + ": " + user_ + "@" + remote_ + " " + command_ );
         }
+
+
 
         // camera location
         char cameraOrientation = Main.getProperties().getProperty( name_ + ".camera-orientation", "N" ).toUpperCase().charAt( 0 ); // N|S|E|W

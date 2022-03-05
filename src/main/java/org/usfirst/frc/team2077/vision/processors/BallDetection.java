@@ -123,7 +123,7 @@ public class BallDetection implements FrameProcessor {
                         }
                         JFrame controlFrame = new JFrame( title );
                         controlFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-                        controlFrame.setAlwaysOnTop( true );
+                        controlFrame.setAlwaysOnTop( false );
                         controlFrame.setContentPane( panel );
                         controlFrame.pack();
                         controlFrame.setVisible( true );

@@ -19,12 +19,15 @@ public class AimingOverlay implements FrameProcessor {
 
     @Override
     public void processFrame( Mat frameMat, Mat overlayMat ) {
-        if(DisplayOverlay.FLAG_ISPIZZA) {
-            Mat tempMap = frameMat.clone();//TODO: Remove this
-            Core.rotate(tempMap, frameMat, Core.ROTATE_90_CLOCKWISE);//TODO: Autodetect type
-            tempMap = overlayMat.clone();
-            Core.rotate(tempMap, overlayMat, Core.ROTATE_90_CLOCKWISE);//TODO: Autodetect type
-        }
+
+//        if(DisplayOverlay.FLAG_ISPIZZA) {
+//            Mat tempMap = frameMat.clone();//TODO: Remove this
+//            Core.rotate(tempMap, frameMat, Core.ROTATE_180);//TODO: Autodetect type
+//
+////            tempMap = overlayMat.clone();
+////            Core.rotate(tempMap, overlayMat, Core.ROTATE_90_CLOCKWISE);//TODO: Autodetect type
+//        }
+
 //        Rect rectCrop = new Rect(0,frameMat.rows()/2,frameMat.cols(),frameMat.rows()/2);
         Rect rectCrop = new Rect(0,frameMat.rows(),frameMat.cols(),frameMat.rows());
         if(DisplayOverlay.FLAG_CROPPING_VISION_INPUT_DEBUGGING){
@@ -74,9 +77,10 @@ public class AimingOverlay implements FrameProcessor {
 
 //        AJ AJ_HSV_Module addition and testing code
 //        TODO: Change to nte check
+//        Mat tempMat = frameMat.clone();
         if(true){
             int frameRow = frameMat.rows(), frameCol = frameMat.cols();
-            Ball[] foundBallLocations = BallDetection.findBallLocations(frameMat/*.submat(new Rect(0, (int) (frameCol * 0.6), frameRow, (int) (frameCol * 0.4) ))*/, overlayMat);
+            Ball[] foundBallLocations = BallDetection.findBallLocations(frameMat.submat(new Rect(0, (int) (frameCol * 0.6), frameRow, (int) (frameCol * 0.4) )), overlayMat);
 
 //            SmartDashboard.getEntry(BALL_ANGLE_KEY).setDouble(foundBallLocations[0].angleHoriz());
 //            SmartDashboard.getEntry(BALL_DISTANCE_KEY).setDouble(foundBallLocations[0].distance());
@@ -87,7 +91,7 @@ public class AimingOverlay implements FrameProcessor {
 //            HoopVision.findReflectorLocations(frameMat.submat(new Rect(0, 0, frameRow, (int) (frameCol * 1))), overlayMat);
         }
 //        frameMat.copyTo(overlayMat);
-        overlayMat.copyTo(frameMat);
+//        overlayMat.copyTo(frameMat);
     }
 
     private void drawText(Mat mat, String text, double x, double y) {

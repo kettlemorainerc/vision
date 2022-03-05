@@ -54,14 +54,7 @@ public class DisplayOverlay implements FrameProcessor {
     @Override
     public void processFrame( Mat frameMat, Mat overlayMat ) {
 
-        if(FLAG_ISPIZZA) {
-            Mat tempMap = frameMat.clone();//TODO: Find another way that also works
-            Mat newMat = new Mat();
-            newMat.setTo(GREEN);
-            Core.rotate(tempMap, overlayMat, Core.ROTATE_90_CLOCKWISE);
-//            overlayMat.setTo(RED);
-//            newMat.copyTo(overlayMat);
-        }
+
         Rect rectCrop = new Rect(0,frameMat.rows()/2,frameMat.cols(),frameMat.rows()/2);
         if(FLAG_CROPPING_VISION_INPUT_DEBUGGING){
             System.out.println("rectCrop.x = "+rectCrop.x);
