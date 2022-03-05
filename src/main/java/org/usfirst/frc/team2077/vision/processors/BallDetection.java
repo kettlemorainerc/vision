@@ -295,8 +295,12 @@ public class BallDetection implements FrameProcessor {
         }
 //        HEAD CIRCLE
         if(balls.length > 0){
+//            NTMain.networkTable_.put(key, nte);
+            NTMain.networkTable_.getEntry("ball1").setDouble(balls[0].angleHoriz());
             Imgproc.circle(frameMat, balls[0].point(), (int) balls[0].radius(), DisplayOverlay.MAIN_BALL_OUTLINE_COLOR, 5);
             Imgproc.circle(overlayMat, balls[0].point(), (int) balls[0].radius(), DisplayOverlay.MAIN_BALL_OUTLINE_COLOR, 5);
+        }else{
+            NTMain.networkTable_.getEntry("ball1").setDouble(0D);
         }
 
 
