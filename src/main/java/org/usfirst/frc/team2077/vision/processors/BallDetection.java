@@ -24,9 +24,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BallDetection implements FrameProcessor {
 
     /* START CONSTENTS */
-    public static final int VISION_WIDTH = 1_000;//TODO: implement get rows or colloms
+    public static final int VISION_WIDTH = 1_000;//TODO: implement get rows or collumns
     public static final int VISION_DEGREES = 90;
 
+    public static final Scalar RED = new Scalar(255,0,0,255);
+    public static final Scalar BLUE = new Scalar(0,0,255,255);
 
     private final static Map<String, Setting> settings_ = Setting.initializeSettings( "HSVFilter Settings",
 
@@ -329,8 +331,11 @@ public class BallDetection implements FrameProcessor {
         if(DisplayOverlay.FLAG_SMARTDASHBOARD){//TODO: Do something else here now
         }
 
-        Imgproc.line( frameMat, new Point(VISION_WIDTH,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,255,150), 3);
-        Imgproc.line( frameMat, new Point(0,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,255,150), 3);
+//        Imgproc.line( frameMat, new Point(VISION_WIDTH,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,255,150), 3);
+//        Imgproc.line( frameMat, new Point(0,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,255,150), 3);
+
+
+        Imgproc.circle(overlayMat, new Point(30, 30), 27, (settings_.get("Alliance").value() == 0? RED : BLUE), 5);
 //        Imgproc.line( frameMat, new Point(VISION_WIDTH,VISION_WIDTH), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,0,150), 3);
 //        Imgproc.line( frameMat, new Point(VISION_WIDTH,0), new Point(VISION_WIDTH,VISION_WIDTH), new Scalar(0,0,0,150), 3);
 

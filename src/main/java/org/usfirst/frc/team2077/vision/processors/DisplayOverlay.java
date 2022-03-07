@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.cfg.ContextAttributes;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.usfirst.frc.team2077.video.Main;
@@ -51,6 +52,9 @@ public class DisplayOverlay implements FrameProcessor {
 
     private Map<String,NetworkTableEntry> nte_ = new TreeMap<>();
 
+    private final static String BALL_ANGLE_KEY = "ball_angle";
+    private final static String BALL_DISTANCE_KEY = "ball_distance";
+
     @Override
     public void processFrame( Mat frameMat, Mat overlayMat ) {
 
@@ -89,8 +93,17 @@ public class DisplayOverlay implements FrameProcessor {
             Imgproc.circle(overlayMat, new Point(155, rows/2-150), 5, ready ? GREEN : RED, 9);
         }
 
+
+
         if(FIND_BALLS){
             Ball[] foundBallLocations = BallDetection.findBallLocations(frameMat, overlayMat);
+
+            if(foundBallLocations.length > 0) {
+                SmartDashboard.getEntry(BALL_ANGLE_KEY).setDouble(foundBallLocations[0].angleHoriz());
+//                SmartDashboard.getEntry(BALL_DISTANCE_KEY).setDouble(foundBallLocations[0].distance());
+            }
+
+
             if(FLAG_DEBUG_ALL_BALLS_INFO){
                 for(Ball ball: foundBallLocations){
                     System.out.print("findBallLocations = ");

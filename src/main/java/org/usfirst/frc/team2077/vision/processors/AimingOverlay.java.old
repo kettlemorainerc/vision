@@ -82,8 +82,9 @@ public class AimingOverlay implements FrameProcessor {
             int frameRow = frameMat.rows(), frameCol = frameMat.cols();
             Ball[] foundBallLocations = BallDetection.findBallLocations(frameMat.submat(new Rect(0, (int) (frameCol * 0.6), frameRow, (int) (frameCol * 0.4) )), overlayMat);
 
-//            SmartDashboard.getEntry(BALL_ANGLE_KEY).setDouble(foundBallLocations[0].angleHoriz());
-//            SmartDashboard.getEntry(BALL_DISTANCE_KEY).setDouble(foundBallLocations[0].distance());
+            System.out.println("Hi--------------------------------------------------------");
+            SmartDashboard.getEntry(BALL_ANGLE_KEY).setDouble(foundBallLocations[0].angleHoriz());
+//            getNTE(BALL_DISTANCE_KEY).setDouble(foundBallLocations[0].distance());
 
 //            System.out.print("findBallLocations = ");
 //            for(Ball ball: foundBallLocations){
