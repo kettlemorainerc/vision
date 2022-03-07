@@ -18,7 +18,7 @@ public class DisplayOverlay implements FrameProcessor {
 
     /*           FLAGS               */
     public static final boolean FLAG_DEBUGLINE = false;
-    public static final boolean FLAG_ISPIZZA = false;
+    public static final boolean FLAG_ISPIZZA = true;
     public static final boolean FLAG_SMARTDASHBOARD = false;
     public static final boolean FLAG_BALL_TEXT_LABELS = true;
     public static final boolean FLAG_DEBUG_ANGLE_IN_CENTER = false;//TODO: Make changeable
