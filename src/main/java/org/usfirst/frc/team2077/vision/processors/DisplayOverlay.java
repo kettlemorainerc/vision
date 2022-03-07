@@ -5,6 +5,8 @@ import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.cfg.ContextAttributes;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTableInstance;
+
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.usfirst.frc.team2077.video.Main;
@@ -78,19 +80,18 @@ public class DisplayOverlay implements FrameProcessor {
         Imgproc.line(overlayMat, new Point(cols/2, 0), new Point(cols/2, rows), GREEN, 1);
 
         NetworkTableEntry nte;
-
-        if ( (nte = getNTE("setPointShoot")) != null ) {
-            double setPoint = nte.getDouble(0);
-            if (setPoint >= 0) {
-                String setPointS = "Target RPM:" + (Math.round(setPoint*10.)/10.);
-                drawText(overlayMat, setPointS, 20, rows/2+80, TEXT_BACKGROUND_COLOR);
-            }
+        if ( (nte = getNTE("launcher_RPM")) != null ) {
+            double setPoint = NetworkTableInstance.getDefault().getEntry("launcher_RPM").getDouble(4_000);
+            String setPointS = "Target RPM:" + (Math.round(setPoint*10.)/10.);
+            drawText(overlayMat, setPointS.substring(0, setPointS.indexOf('.')), 20, rows/2-200, TEXT_BACKGROUND_COLOR);
+        }else{
+            NetworkTableInstance.getDefault().getEntry("launcher_RPM").setDouble(4_000);
         }
 
         if ( (nte = getNTE("ReadyShoot")) != null ) {
             boolean ready = nte.getBoolean(false);
             drawText(overlayMat, "Shoot?: ", 20, rows/2-160, TEXT_BACKGROUND_COLOR);
-            Imgproc.circle(overlayMat, new Point(155, rows/2-150), 5, ready ? GREEN : RED, 9);
+            Imgproc.circle(overlayMat, new Point(155, rows/2-170), 5, ready ? GREEN : RED, 9);
         }
 
 
@@ -122,7 +123,7 @@ public class DisplayOverlay implements FrameProcessor {
     }
 
     private static void drawText(Mat mat, String text, double x, double y, Scalar boxColor){
-        Imgproc.rectangle(mat, new Point(x-3,y+6), new Point(x+text.length()*14.55+6,y-26), boxColor,-1);
+        Imgproc.rectangle(mat, new Point(x-3,y+6), new Point(x+text.length()*17+10,y-26), boxColor,-1);
         drawText(mat, text, x, y);
     }
 
