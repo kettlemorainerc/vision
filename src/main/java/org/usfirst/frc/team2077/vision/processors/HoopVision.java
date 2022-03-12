@@ -25,7 +25,7 @@ public class HoopVision implements FrameProcessor {
 
     /*           FLAGS               */
     public static final boolean FLAG_DEBUGLINE = true;
-//    public static final boolean FLAG_ISPIZZA = false;
+    public static final boolean FLAG_ISPIZZA = true;
     public static final boolean FLAG_SMARTDASHBOARD = false;
     public static final boolean FLAG_BALLTEXTLABLES = true;
     public static final boolean FLAG_DEBUGANGLE_IN_CENTER = false;//TODO: Make changeable
@@ -172,7 +172,7 @@ public class HoopVision implements FrameProcessor {
         }
     }
 
-    public static void findReflectorLocations(Mat frameMat, Mat overlayMat) {
+    public static int[] findReflectorLocations(Mat frameMat, Mat overlayMat) {
 
         Map<String, NetworkTableEntry> nte_ = new TreeMap<>();
 
@@ -272,7 +272,8 @@ public class HoopVision implements FrameProcessor {
 //
 //        Imgproc.line( frameMat, new Point( 0, VISION_WIDTH/2), new Point(VISION_WIDTH, VISION_WIDTH/2), COLOR_DEBUG_MIDLINE, 3);
 
-        int highestPoint = VISION_WIDTH;
+        int highestPointY = VISION_WIDTH;
+        int highestPointX = 0;
 
         for (int i = 0; i < contours.size(); i++) {
 
@@ -285,18 +286,23 @@ public class HoopVision implements FrameProcessor {
                     double centerY = boundRect.y + (boundRect.height * 0.5);
                     double centerX = boundRect.x + (boundRect.width * 0.5);
 
-                    highestPoint = Math.min(highestPoint, (int) centerY);
+                    if(centerY < highestPointY ){
+                        highestPointY = (int) centerY;
+                        highestPointX = (int) centerX;
+                    }
+
                     Imgproc.circle(overlayMat, new Point(centerX, centerY), 40, ALL_OVERLAYMAT_BALL_OUTLINE, 3);
                     Imgproc.circle(frameMat, new Point(centerX, centerY), 40, ALL_OVERLAYMAT_BALL_OUTLINE, 3);
                 }
             }
         }
+        Imgproc.circle(overlayMat, new Point(highestPointX, highestPointY), 40, PURPLELY, 3);
+        Imgproc.circle(frameMat, new Point(highestPointX, highestPointY), 40, PURPLELY, 3);
+//        double angle = Math.abs((VISION_WIDTH * 0.5 - highestPoint) * horizPixels/(settings_.get("FocalLength").value()));
+//        double distance = hoopHeight / Math.tan(Math.toRadians(angle));
 
-        double angle = Math.abs((VISION_WIDTH * 0.5 - highestPoint) * horizPixels/(settings_.get("FocalLength").value()));
-        double distance = hoopHeight / Math.tan(Math.toRadians(angle));
 
-
-        drawText(overlayMat, "("+distance+""+")", VISION_WIDTH/2-40, VISION_WIDTH/2);
+//        drawText(overlayMat, "("+distance+""+")", VISION_WIDTH/2-40, VISION_WIDTH/2);
 
 
                 //new Rect(0,frameMat.rows()/2,frameMat.cols(),frameMat.rows()/2)
@@ -470,7 +476,7 @@ public class HoopVision implements FrameProcessor {
 ////        frameMat.copyTo(secondMat);
 //
 //
-//        return /*balls*/;
+        return new int[]{highestPointX, highestPointY};
     }
 
 

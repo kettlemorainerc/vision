@@ -30,7 +30,7 @@ public class BallDetection implements FrameProcessor {
     public static final Scalar RED = new Scalar(255,0,0,255);
     public static final Scalar BLUE = new Scalar(0,0,255,255);
 
-    private final static Map<String, Setting> settings_ = Setting.initializeSettings( "HSVFilter Settings",
+    public final static Map<String, Setting> settings_ = Setting.initializeSettings( "HSVFilter Settings",
 
             new BallDetection.Setting( "H min", 0, 255, 120 ), // BLUE 0, RED: 100
             new BallDetection.Setting( "H max", 0, 255, 150 ), // 50, 150
@@ -41,6 +41,7 @@ public class BallDetection implements FrameProcessor {
             new BallDetection.Setting( "R min", 0, 255, 30 ),
             new BallDetection.Setting( "R max", 0, 255, 130 ),
             new BallDetection.Setting( "Threshold", 0, 255, 65 ),
+            new BallDetection.Setting("Detection",0,1,0, "Tower", "Ball"),
             new BallDetection.Setting("Alliance",0,1,1, "Red", "Blue"));
 
     public static class Setting {

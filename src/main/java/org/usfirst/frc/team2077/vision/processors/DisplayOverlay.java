@@ -53,9 +53,9 @@ public class DisplayOverlay implements FrameProcessor {
     public static final int MAT_DISPLAY = 0; // 0 default camera stream (ready for comp), 1 is hsv overlay
 
     private Map<String,NetworkTableEntry> nte_ = new TreeMap<>();
-
-    private final static String BALL_ANGLE_KEY = "ball_angle";
-    private final static String BALL_DISTANCE_KEY = "ball_distance";
+    private final static String VISION_DATA_KEY = "all_vision_data";
+    private byte lastNTECall = (byte) 0b10000000;
+//    private final static String BALL_DISTANCE_KEY = "ball_distance";
 
     @Override
     public void processFrame( Mat frameMat, Mat overlayMat ) {
@@ -71,8 +71,8 @@ public class DisplayOverlay implements FrameProcessor {
             System.out.println("framemat.row = "+frameMat.rows());
         }
 
-        Mat image_output = frameMat.submat(rectCrop);
-        frameMat = image_output;
+//        Mat image_output = frameMat.submat(rectCrop);
+//        frameMat = image_output;
 
         int rows = overlayMat.rows();
         int cols = overlayMat.cols();
@@ -96,12 +96,47 @@ public class DisplayOverlay implements FrameProcessor {
 
 
 
-        if(FIND_BALLS){
-            Ball[] foundBallLocations = BallDetection.findBallLocations(frameMat, overlayMat);
+        if(FIND_BALLS && BallDetection.settings_.get("Detection").value() == 0){
+            Rect ballRect = new Rect(0,(int) (frameMat.rows() * 0.5), frameMat.cols(), (int) (frameMat.rows() * 0.5));
+            Ball[] foundBallLocations = BallDetection.findBallLocations(frameMat.submat(ballRect), overlayMat);//.submat(ballRect));
 
-            if(foundBallLocations.length > 0) {
-                SmartDashboard.getEntry(BALL_ANGLE_KEY).setDouble(foundBallLocations[0].angleHoriz());
-//                SmartDashboard.getEntry(BALL_DISTANCE_KEY).setDouble(foundBallLocations[0].distance());
+            double angle = 0;
+            double distance = 0;
+            byte mask = 0;
+            boolean seesBall = foundBallLocations.length > 0;
+            if(seesBall) {
+                angle = foundBallLocations[0].angleHoriz();
+                distance = foundBallLocations[0].distance();
+            }
+
+            boolean direction = angle > 0;
+            // 0000000X
+            mask |= direction? 1 : 0;
+
+            int rotateSpeedOrdinal = Speed.forAngle(seesBall, angle).ordinal();
+            // 00000XX0
+            mask |= rotateSpeedOrdinal << 1;
+
+            Speed moveSpeed = Speed.forDistance(distance);
+            // 000XX000
+
+            mask |= (rotateSpeedOrdinal == 0? moveSpeed.ordinal() : 0) << 3;
+
+            // 00X00000
+            boolean runObtainer = distance <= 40;
+            mask |= (runObtainer? 1 : 0) << 5;
+
+
+            if(lastNTECall != mask && seesBall) {
+                lastNTECall = mask;
+//                System.out.println(distance);
+
+                SmartDashboard.getEntry(VISION_DATA_KEY).setNumber(mask);
+                System.out.println(String.format("%8s", Integer.toBinaryString(mask & 0xFF)).replace(' ', '0'));
+            }else if(lastNTECall == (byte) 0b10000000){
+                lastNTECall = (byte) 0b11000000;
+                SmartDashboard.getEntry(VISION_DATA_KEY).setNumber((byte) 0b00000110);
+//                System.out.println(String.format("%8s", Integer.toBinaryString(thisIsOnlyHereSoICanPrintAValueLolSorryAJOopsSorryLOLShouldBeCapitalisedLMAO & 0xFF)).replace(' ', '0'));
             }
 
 
@@ -110,6 +145,12 @@ public class DisplayOverlay implements FrameProcessor {
                     System.out.print("findBallLocations = ");
                 }
             }
+        }else if(FIND_BALLS && BallDetection.settings_.get("Detection").value() == 1){
+            Rect hoopRect = new Rect(0,0, frameMat.cols(), (int) (frameMat.rows() * 0.30));
+            Ball[] foundBallLocations = BallDetection.findBallLocations(frameMat.submat(hoopRect), overlayMat);//.submat(ballRect));
+
+//            mask
+
         }
 
         switch(MAT_DISPLAY){
@@ -141,6 +182,36 @@ public class DisplayOverlay implements FrameProcessor {
             return nte;
         }
         return null;
+    }
+
+    public enum Speed{
+        NONE, LOW, MID, HIGH;
+
+        public static Speed forAngle(boolean seesBall, double angle){
+            angle = Math.abs(angle);
+            if(angle > 30 || !seesBall) {
+                return HIGH;
+            }else if(angle > 15){
+                return MID;
+            }else if(angle > 5){
+                return LOW;
+            }else {
+                return NONE;
+            }
+        }
+        public static Speed forDistance(double distance){
+            if(distance > 300){
+                return HIGH;
+            }else if(distance > 175){
+                return MID;
+            }else if(distance > 100){
+                return LOW;
+            }else{
+                return NONE;
+            }
+        }
+
+
     }
 
 }
