@@ -9,10 +9,10 @@ public class Ball implements Comparable<Ball>{
 
     private static double width = BallDetection.VISION_WIDTH;
     private static double horizPixels = Math.sqrt(width * 2);
-    private static double focalLength = 321;//334.0;
+    private static double focalLength = 500;//334.0;
     private static double anglePerPixel = horizPixels/focalLength;
 
-    private static double heightFromBall = 2; //TODO, set to robot camera height - ball radius/2
+    private static double heightFromBall = 56.515; //TODO, set to robot camera height - ball radius/2
 
 
     public Ball(){
