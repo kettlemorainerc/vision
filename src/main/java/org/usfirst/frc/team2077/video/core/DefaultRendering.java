@@ -1,6 +1,7 @@
 package org.usfirst.frc.team2077.video.core;
 
 import java.awt.Dimension;
+import java.lang.reflect.Constructor;
 import java.util.Arrays;
 
 import org.usfirst.frc.team2077.video.Main;
@@ -48,7 +49,10 @@ public class DefaultRendering implements Rendering {
         RenderingProjection projection = null;
         try {
             Class<?> projectionClass = Class.forName(Main.getProperties().getProperty(name_ + ".projection", sourceProjection_.getClass().getName()));
-            projection = (RenderingProjection)projectionClass.getDeclaredConstructor(String.class, RenderedView.class).newInstance(name_, view_);
+            System.out.println(name_ + ": Projection class: " + projectionClass);
+            Constructor<?> constr = projectionClass.getConstructor(String.class, RenderedView.class);
+            System.out.println(name_ + ": Constructor: " + constr);
+            projection = (RenderingProjection) constr.newInstance(name_, view_);
         } catch (Exception ex) {
             System.out.println("SEVERE:" + "Projection initialization failed  for " + name_ + ".");
             ex.printStackTrace(System.out);

@@ -23,7 +23,7 @@ public class DisplayOverlay implements FrameProcessor {
     public static final boolean FLAG_DEBUGLINE = false;
     public static final boolean FLAG_ISPIZZA = false;
     public static final boolean FLAG_SMARTDASHBOARD = false;
-    public static final boolean FLAG_BALL_TEXT_LABELS = true;
+    public static final boolean FLAG_BALL_TEXT_LABELS = false;
     public static final boolean FLAG_DEBUG_ANGLE_IN_CENTER = false;//TODO: Make changeable
     public static final boolean FLAG_CROPPING_VISION_INPUT_DEBUGGING = false;
     public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = false;
@@ -61,7 +61,6 @@ public class DisplayOverlay implements FrameProcessor {
     @Override
     public void processFrame( Mat frameMat, Mat overlayMat ) {
 
-
         Rect rectCrop = new Rect(0,frameMat.rows()/2,frameMat.cols(),frameMat.rows()/2);
         if( FLAG_CROPPING_VISION_INPUT_DEBUGGING){
             System.out.println("rectCrop.x = "+rectCrop.x);
@@ -76,8 +75,16 @@ public class DisplayOverlay implements FrameProcessor {
 //        ball1submat.setTo(new Scalar(255,0,255,255));
         Imgproc.rectangle(overlayMat, new Point(rectCrop.x, rectCrop.y), new Point(rectCrop.x + ball1submat.width(), rectCrop.y+ball1submat.height()), GREEN, 5);
         Mat area = new Mat(overlayMat.rows(), overlayMat.cols(), overlayMat.type());
-        Imgproc.rectangle(area, new Point(rectCrop.x, rectCrop.y), new Point(rectCrop.x + ball1submat.width(), rectCrop.y+ball1submat.height()), new Scalar(255,255,255,150), -1);
-//        overlayMat.setTo(new Scalar(0,255,0,25), area);
+        Imgproc.rectangle(area, new Point(0, 750), new Point(260,1000), new Scalar(255,255,255,255), -1);
+        Imgproc.rectangle(area, new Point(1000, 750), new Point(1000-260,1000), new Scalar(255,255,255,255), -1);
+
+        Imgproc.rectangle(area, new Point(300, 600), new Point(1000-300,750), new Scalar(255,255,255,255), -1);
+
+
+        overlayMat.setTo(new Scalar(255,255,255,50), area);
+        frameMat.setTo(new Scalar(0,0,0,255), area);
+//        overlayMat.setTo(new Scalar(0,0,0,255), area);
+//        area.copyTo(overlayMat);
 //        ball1submat.copyTo(overlayMat);
 //        frameMat = ball1submat;
 
@@ -102,9 +109,9 @@ public class DisplayOverlay implements FrameProcessor {
         }
 
 
-        if(FIND_BALLS && BallDetection.settings_.get("Detection").value() == 0){
-            Rect ballRect = new Rect(0,(int) (frameMat.rows() * 0.5), frameMat.cols(), (int) (frameMat.rows() * 0.5));
-            Ball[] foundBallLocations = BallDetection.findBallLocations(frameMat.submat(ballRect), overlayMat);//.submat(ballRect));
+        if(FIND_BALLS){// && BallDetection.settings_.get("Detection").value() == 0){
+//            Rect ballRect = new Rect(0,(int) (frameMat.rows() * 0.5), frameMat.cols(), (int) (frameMat.rows() * 0.5));
+            Ball[] foundBallLocations = BallDetection.findBallLocations(frameMat, overlayMat);//.submat(ballRect));
 
             double angle = 0;
             double distance = 0;

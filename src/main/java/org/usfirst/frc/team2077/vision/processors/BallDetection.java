@@ -41,7 +41,7 @@ public class BallDetection implements FrameProcessor {
             new BallDetection.Setting( "R min", 0, 255, 30 ),
             new BallDetection.Setting( "R max", 0, 255, 130 ),
             new BallDetection.Setting( "Threshold", 0, 255, 65 ),
-            new BallDetection.Setting("Detection",0,1,0, "Tower", "Ball"),
+//            new BallDetection.Setting("Detection",0,1,0, "Tower", "Ball"),
             new BallDetection.Setting("Alliance",0,1,0, "Red", "Blue"));
 
     public static class Setting {
