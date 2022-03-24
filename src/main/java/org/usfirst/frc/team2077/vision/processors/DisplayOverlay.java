@@ -23,7 +23,7 @@ public class DisplayOverlay implements FrameProcessor {
     public static final boolean FLAG_DEBUGLINE = false;
     public static final boolean FLAG_ISPIZZA = false;
     public static final boolean FLAG_SMARTDASHBOARD = false;
-    public static final boolean FLAG_BALL_TEXT_LABELS = false;
+    public static final boolean FLAG_BALL_TEXT_LABELS = true;
     public static final boolean FLAG_DEBUG_ANGLE_IN_CENTER = false;//TODO: Make changeable
     public static final boolean FLAG_CROPPING_VISION_INPUT_DEBUGGING = false;
     public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = false;
@@ -47,7 +47,7 @@ public class DisplayOverlay implements FrameProcessor {
     public static final Scalar TEXT_BACKGROUND_COLOR = GREY;
     public static final Scalar FRAMEMAT_BALL_OUTLINE = GREY;//new Scalar(0, 0, 255, 64);
     public static final Scalar OVERLAYMAT_BALL_OUTLINE = BLOOD_ORANGE;// new Scalar(0, 0, 255, 128);
-    public static final Scalar ALL_OVERLAYMAT_BALL_OUTLINE = BLACK;
+    public static final Scalar ALL_OVERLAYMAT_BALL_OUTLINE = GREEN;
     /* END CONSTENTS */
 
 
@@ -71,17 +71,15 @@ public class DisplayOverlay implements FrameProcessor {
             System.out.println("framemat.row = "+frameMat.rows());
         }
 
-        Mat ball1submat = frameMat.submat(rectCrop);
 //        ball1submat.setTo(new Scalar(255,0,255,255));
-        Imgproc.rectangle(overlayMat, new Point(rectCrop.x, rectCrop.y), new Point(rectCrop.x + ball1submat.width(), rectCrop.y+ball1submat.height()), GREEN, 5);
-        Mat area = new Mat(overlayMat.rows(), overlayMat.cols(), overlayMat.type());
-        Imgproc.rectangle(area, new Point(0, 750), new Point(260,1000), new Scalar(255,255,255,255), -1);
-        Imgproc.rectangle(area, new Point(1000, 750), new Point(1000-260,1000), new Scalar(255,255,255,255), -1);
+//        Imgproc.rectangle(overlayMat, new Point(rectCrop.x, rectCrop.y), new Point(rectCrop.x + ball1submat.width(), rectCrop.y+ball1submat.height()), GREEN, 5);
+        Mat area = new Mat(overlayMat.rows(), overlayMat.cols(), frameMat.type());
+        Imgproc.rectangle(area, new Point(0, 770), new Point(250,1000), new Scalar(255,255,255,255), -1);
+        Imgproc.rectangle(area, new Point(1000, 770), new Point(1000-280,1000), new Scalar(255,255,255,255), -1);
 
-        Imgproc.rectangle(area, new Point(300, 600), new Point(1000-300,750), new Scalar(255,255,255,255), -1);
+        Imgproc.rectangle(area, new Point(280, 625), new Point(1000-375,780), new Scalar(255,255,255,255), -1);
 
-
-        overlayMat.setTo(new Scalar(255,255,255,50), area);
+//        overlayMat.setTo(new Scalar(255,255,255,50), area);
         frameMat.setTo(new Scalar(0,0,0,255), area);
 //        overlayMat.setTo(new Scalar(0,0,0,255), area);
 //        area.copyTo(overlayMat);
@@ -112,6 +110,9 @@ public class DisplayOverlay implements FrameProcessor {
         if(FIND_BALLS){// && BallDetection.settings_.get("Detection").value() == 0){
 //            Rect ballRect = new Rect(0,(int) (frameMat.rows() * 0.5), frameMat.cols(), (int) (frameMat.rows() * 0.5));
             Ball[] foundBallLocations = BallDetection.findBallLocations(frameMat, overlayMat);//.submat(ballRect));
+            if(foundBallLocations.length>0){
+                Imgproc.circle(overlayMat, foundBallLocations[0].point(), (int) foundBallLocations[0].radius(), DisplayOverlay.MAIN_BALL_OUTLINE_COLOR, 5);
+            }
 
             double angle = 0;
             double distance = 0;
@@ -122,9 +123,9 @@ public class DisplayOverlay implements FrameProcessor {
                 distance = foundBallLocations[0].distance();
             }
 
-            boolean direction = angle > 0;
+            boolean LEFT = angle > 0;
             // 0000000X
-            mask |= direction? 1 : 0;
+            mask |= LEFT? 1 : 0;
 
             int rotateSpeedOrdinal = Speed.forAngle(seesBall, angle).ordinal();
             // 00000XX0
@@ -146,10 +147,12 @@ public class DisplayOverlay implements FrameProcessor {
 
                 SmartDashboard.getEntry(VISION_DATA_KEY).setNumber(mask);
                 System.out.println(String.format("%8s", Integer.toBinaryString(mask & 0xFF)).replace(' ', '0'));
-            }else if(lastNTECall == (byte) 0b10000000){
-                lastNTECall = (byte) 0b11000000;
-                SmartDashboard.getEntry(VISION_DATA_KEY).setNumber((byte) 0b00000110);
-//                System.out.println(String.format("%8s", Integer.toBinaryString(thisIsOnlyHereSoICanPrintAValueLolSorryAJOopsSorryLOLShouldBeCapitalisedLMAO & 0xFF)).replace(' ', '0'));
+//            }else if(lastNTECall == (byte) 0b10000000){
+//                lastNTECall = (byte) 0b11000000;
+//                SmartDashboard.getEntry(VISION_DATA_KEY).setNumber((byte) 0b00000110);
+////                System.out.println(String.format("%8s", Integer.toBinaryString(thisIsOnlyHereSoICanPrintAValueLolSorryAJOopsSorryLOLShouldBeCapitalisedLMAO & 0xFF)).replace(' ', '0'));
+            } else if(!seesBall) {
+                SmartDashboard.getEntry(VISION_DATA_KEY).setNumber(0);
             }
 
 

@@ -227,7 +227,7 @@ public class BallDetection implements FrameProcessor {
                 NetworkTableInstance.getDefault().getEntry("ball").setDoubleArray(new double[]{x, y, (double) r});
 
                 // all circle outline
-                Imgproc.circle(frameMat, center, (int)r, DisplayOverlay.ALL_OVERLAYMAT_BALL_OUTLINE, 3);
+//                Imgproc.circle(frameMat, center, (int)r, DisplayOverlay.ALL_OVERLAYMAT_BALL_OUTLINE, 3);
                 Imgproc.circle(overlayMat, center, (int)r, DisplayOverlay.ALL_OVERLAYMAT_BALL_OUTLINE, 3);
             }
 
@@ -300,8 +300,8 @@ public class BallDetection implements FrameProcessor {
         if(balls.length > 0){
 //            NTMain.networkTable_.put(key, nte);
             NTMain.networkTable_.getEntry("ball1").setDouble(balls[0].angleHoriz());
-            Imgproc.circle(frameMat, balls[0].point(), (int) balls[0].radius(), DisplayOverlay.MAIN_BALL_OUTLINE_COLOR, 5);
-            Imgproc.circle(overlayMat, balls[0].point(), (int) balls[0].radius(), DisplayOverlay.MAIN_BALL_OUTLINE_COLOR, 5);
+//            Imgproc.circle(frameMat, balls[0].point(), (int) balls[0].radius(), DisplayOverlay.MAIN_BALL_OUTLINE_COLOR, 5);
+//            Imgproc.circle(overlayMat, balls[0].point(), (int) balls[0].radius(), DisplayOverlay.MAIN_BALL_OUTLINE_COLOR, 5);
         }else{
             NTMain.networkTable_.getEntry("ball1").setDouble(0D);
         }
