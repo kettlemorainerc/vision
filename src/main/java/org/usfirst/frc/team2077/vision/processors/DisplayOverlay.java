@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.cfg.ContextAttributes;
+import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -32,6 +33,7 @@ public class DisplayOverlay implements FrameProcessor {
     //COLORS
     public static final Scalar RED = new Scalar(0,0,255,255);
     public static final Scalar GREEN = new Scalar(0,255,0,255);
+    public static final Scalar YELLOW = new Scalar(225,255,0,255);
     public static final Scalar WHITE = new Scalar(255,255,255,255);
     public static final Scalar GREY = new Scalar(180,180,180,255);
     public static final Scalar BLACK = new Scalar(0,0,0,255);
@@ -56,32 +58,42 @@ public class DisplayOverlay implements FrameProcessor {
     private Map<String,NetworkTableEntry> nte_ = new TreeMap<>();
     private final static String VISION_DATA_KEY = "all_vision_data";
     private byte lastNTECall = (byte) 0b10000000;
+//    private long estimatedGameTime = -4l;
+    private final static NetworkTableEntry secondsNTE;
+    private static int gameSeconds = 0;
 //    private final static String BALL_DISTANCE_KEY = "ball_distance";
+
+    static {
+        secondsNTE = NetworkTableInstance.getDefault().getTable("robot").getEntry("time");
+        secondsNTE.addListener(entry -> {
+            gameSeconds = (int) secondsNTE.getDouble(0);
+        }, EntryListenerFlags.kUpdate | EntryListenerFlags.kNew | EntryListenerFlags.kImmediate | EntryListenerFlags.kLocal);
+    }
 
     @Override
     public void processFrame( Mat frameMat, Mat overlayMat ) {
 
-        Rect rectCrop = new Rect(0,frameMat.rows()/2,frameMat.cols(),frameMat.rows()/2);
-        if( FLAG_CROPPING_VISION_INPUT_DEBUGGING){
-            System.out.println("rectCrop.x = "+rectCrop.x);
-            System.out.println("rectCrop.y = "+rectCrop.y);
-            System.out.println("rectCrop.width = "+rectCrop.width);
-            System.out.println("rectCrop.height = "+rectCrop.height);
-            System.out.println("framemat.col = "+frameMat.cols());
-            System.out.println("framemat.row = "+frameMat.rows());
+        Rect rectCrop = new Rect(0, frameMat.rows() / 2, frameMat.cols(), frameMat.rows() / 2);
+        if (FLAG_CROPPING_VISION_INPUT_DEBUGGING) {
+            System.out.println("rectCrop.x = " + rectCrop.x);
+            System.out.println("rectCrop.y = " + rectCrop.y);
+            System.out.println("rectCrop.width = " + rectCrop.width);
+            System.out.println("rectCrop.height = " + rectCrop.height);
+            System.out.println("framemat.col = " + frameMat.cols());
+            System.out.println("framemat.row = " + frameMat.rows());
         }
 
 //        ball1submat.setTo(new Scalar(255,0,255,255));
 //        Imgproc.rectangle(overlayMat, new Point(rectCrop.x, rectCrop.y), new Point(rectCrop.x + ball1submat.width(), rectCrop.y+ball1submat.height()), GREEN, 5);
         Mat area = new Mat(overlayMat.rows(), overlayMat.cols(), frameMat.type());
-        Imgproc.rectangle(area, new Point(0, 770), new Point(250,1000), new Scalar(255,255,255,255), -1);
-        Imgproc.rectangle(area, new Point(1000, 770), new Point(1000-280,1000), new Scalar(255,255,255,255), -1);
+        Imgproc.rectangle(area, new Point(0, 770), new Point(250, 1000), new Scalar(255, 255, 255, 255), -1);
+        Imgproc.rectangle(area, new Point(1000, 770), new Point(1000 - 280, 1000), new Scalar(255, 255, 255, 255), -1);
 
-        Imgproc.rectangle(area, new Point(280, 625), new Point(1000-375,780), new Scalar(255,255,255,255), -1);
+        Imgproc.rectangle(area, new Point(280, 625), new Point(1000 - 375, 780), new Scalar(255, 255, 255, 255), -1);
 
 //        overlayMat.setTo(new Scalar(255,255,255,50), area);
-        frameMat.setTo(new Scalar(0,0,0,255), area);
-//        overlayMat.setTo(new Scalar(0,0,0,255), area);
+        frameMat.setTo(new Scalar(0, 0, 0, 255), area);
+//        overlayMat.setTo(new Scalar(255,255,255,50), area);
 //        area.copyTo(overlayMat);
 //        ball1submat.copyTo(overlayMat);
 //        frameMat = ball1submat;
@@ -89,22 +101,24 @@ public class DisplayOverlay implements FrameProcessor {
         int rows = overlayMat.rows();
         int cols = overlayMat.cols();
 
-        Imgproc.line(overlayMat, new Point(cols/2, 0), new Point(cols/2, rows), GREEN, 1);
+        Imgproc.line(overlayMat, new Point(cols / 2, 0), new Point(cols / 2, rows), GREEN, 1);
 
         NetworkTableEntry nte;
-        if ( (nte = getNTE("launcher_RPM")) != null ) {
+        if ((nte = getNTE("launcher_RPM")) != null) {
             double setPoint = NetworkTableInstance.getDefault().getEntry("launcher_RPM").getDouble(4_000);
-            String setPointS = "Target RPM:" + (Math.round(setPoint*10.)/10.);
-            drawText(overlayMat, setPointS.substring(0, setPointS.indexOf('.')), 20, rows/2-200, TEXT_BACKGROUND_COLOR);
-        }else{
+            String setPointS = "Target RPM:" + (Math.round(setPoint * 10.) / 10.);
+            drawText(overlayMat, setPointS.substring(0, setPointS.indexOf('.')), 20, rows / 2 - 200, TEXT_BACKGROUND_COLOR);
+        } else {
             NetworkTableInstance.getDefault().getEntry("launcher_RPM").setDouble(4_000);
         }
 
-        if ( (nte = getNTE("ReadyShoot")) != null ) {
-            boolean ready = nte.getBoolean(false);
-            drawText(overlayMat, "Shoot?: ", 20, rows/2-160, TEXT_BACKGROUND_COLOR);
-            Imgproc.circle(overlayMat, new Point(155, rows/2-170), 5, ready ? GREEN : RED, 9);
-        }
+//        if(estimatedGameTime > 0){
+//            Imgproc.circle(overlayMat, new Point(155, rows/2-170), 5, );
+//            int estimatedGameSeconds = (int) (180-(System.currentTimeMillis() - estimatedGameTime)/1000);
+//       double estimatedGameSeconds = ;
+//        } else if ((nte = getNTE("game_time")) != null && nte.getDouble(-2d) == 0d ) {
+//            estimatedGameTime = System.currentTimeMillis();
+        drawText(overlayMat, "Time: "+gameSeconds, 20, rows/2-160, (gameSeconds<15)?RED:(gameSeconds<40? YELLOW:GREEN));
 
 
         if(FIND_BALLS){// && BallDetection.settings_.get("Detection").value() == 0){
@@ -150,7 +164,7 @@ public class DisplayOverlay implements FrameProcessor {
 //            }else if(lastNTECall == (byte) 0b10000000){
 //                lastNTECall = (byte) 0b11000000;
 //                SmartDashboard.getEntry(VISION_DATA_KEY).setNumber((byte) 0b00000110);
-////                System.out.println(String.format("%8s", Integer.toBinaryString(thisIsOnlyHereSoICanPrintAValueLolSorryAJOopsSorryLOLShouldBeCapitalisedLMAO & 0xFF)).replace(' ', '0'));
+////                System.out.println(String.format("%8s", Integer.toBinaryString(thisIsOnlyHereSoICanPrintAValueLolSorryAJOopsSorryLOLShouldBeCapitsedLMAO & 0xFF)).replace(' ', '0'));
             } else if(!seesBall) {
                 SmartDashboard.getEntry(VISION_DATA_KEY).setNumber(0);
             }
