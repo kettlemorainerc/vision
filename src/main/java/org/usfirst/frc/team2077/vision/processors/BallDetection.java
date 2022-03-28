@@ -19,11 +19,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class is the replacement of the HSVFilter_MERGED which now is being deprecated. The goal is to
- * switch the filter to a more external process which can be called static-aly.
+ * switch the filter to a more external process which can be called statically.
  */
 public class BallDetection implements FrameProcessor {
 
-    /* START CONSTENTS */
+    /* START CONSTANTS */
     public static final int VISION_WIDTH = 1_000;//TODO: implement get rows or collumns
     public static final int VISION_DEGREES = 90;
 
@@ -42,7 +42,7 @@ public class BallDetection implements FrameProcessor {
             new BallDetection.Setting( "R max", 0, 255, 130 ),
             new BallDetection.Setting( "Threshold", 0, 255, 65 ),
 //            new BallDetection.Setting("Detection",0,1,0, "Tower", "Ball"),
-            new BallDetection.Setting("Alliance",0,1,0, "Red", "Blue"));
+            new BallDetection.Setting("Alliance",0,1,0, "Red", "BlueBall"));
 
     public static class Setting {
 

@@ -77,7 +77,7 @@ public class HoopVision implements FrameProcessor {
             new HoopVision.Setting( "A max", 0, Integer.MAX_VALUE, 150 ),
             new HoopVision.Setting( "Threshold", 0, 100, 65 ),
             new HoopVision.Setting( "FocalLength", 300, 550, 473 ));
-//            new HoopVision.Setting("Alliance",0,1,1, "Red", "Blue"));
+//            new HoopVision.Setting("Alliance",0,1,1, "Red", "BlueBall"));
 
     public static class Setting {
 
