@@ -1,17 +1,12 @@
 package org.usfirst.frc.team2077.vision;
 
-import java.io.*;
-import java.util.*;
-import java.util.function.Consumer;
-
-import edu.wpi.first.networktables.EntryNotification;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.*;
+import org.usfirst.frc.team2077.networktable.NetworkTableValue;
 
 
 public class NTMain extends org.usfirst.frc.team2077.vision.Main {
-
     public static NetworkTableInstance networkTable_;
+    private static NetworkTableValue view;
 
     public static void main( String[] args ) {
         init( args );
@@ -23,26 +18,50 @@ public class NTMain extends org.usfirst.frc.team2077.vision.Main {
                 networkTable_.stopClient();
             }
         });
+
+        view = new NetworkTableValue("VisionView");
+        view.addOnChanged(NTMain::repackFrame);
+
+//        NetworkTableEntry visionView = networkTable_.getEntry("VisionView");
+//        visionView.addListener(new Consumer<EntryNotification>() {
+//            @Override
+//            public void accept(EntryNotification en) {
+//                VisionView view = views_.get(NTMain.view.getString());
+//                visionFrame_.setContentPane(view.getJComponent());
+//                if (!visionFrame_.isVisible()) {
+//                    visionFrame_.pack();
+//                    visionFrame_.setVisible(true);
+//                }
+//                visionFrame_.revalidate();
+//                visionFrame_.repaint();
+//            }
+//        }, -1);
         
-        NetworkTableEntry visionView = networkTable_.getEntry("VisionView");
-        visionView.addListener(new Consumer<EntryNotification>() {
-            @Override
-            public void accept(EntryNotification en) {
-                VisionView view = views_.get(en.getEntry().getString(null));
-                visionFrame_.setContentPane(view.getJComponent());
-                if (!visionFrame_.isVisible()) {
-                    visionFrame_.pack();
-                    visionFrame_.setVisible(true);
-                }
-                visionFrame_.revalidate();
-                visionFrame_.repaint();
-            }
-        }, -1);
-        
-        String viewName = visionView.getString(null);
-        VisionView view = views_.get(viewName);
+//        String viewName = visionView.getString(null);
+//        VisionView view = views_.get(viewName);
 
         if (view != null) {
+            repackFrame();
+        } else {
+            while(true) try {NTMain.class.wait();}
+            catch(InterruptedException e) {e.printStackTrace();}
+//            (new Thread() {
+//                public void run() {
+//
+//                    for ( ;; ) {
+//                        try {
+//                            Thread.sleep( 10 * 1000 );
+//                        } catch ( Exception ex ) {
+//                        }
+//                    }
+//                }
+//            }).start();
+        }
+    }
+
+    private static void repackFrame() {
+        VisionView view = views_.get(NTMain.view.getString());
+        if(view != null) {
             visionFrame_.setContentPane(view.getJComponent());
             if (!visionFrame_.isVisible()) {
                 visionFrame_.pack();
@@ -50,19 +69,6 @@ public class NTMain extends org.usfirst.frc.team2077.vision.Main {
             }
             visionFrame_.revalidate();
             visionFrame_.repaint();
-        }
-        else {
-            (new Thread() {
-                public void run() {
-
-                    for ( ;; ) {
-                        try {
-                            Thread.sleep( 10 * 1000 );
-                        } catch ( Exception ex ) {
-                        }
-                    }
-                }
-            }).start();
         }
     }
 }

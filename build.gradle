@@ -1,11 +1,9 @@
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
-import java.util.regex.Pattern
-
 plugins {
     id 'java'
     id 'application'
-    id "edu.wpi.first.GradleRIO" version "${wpiVersion}" // WPI version comes from gradle.properties
+//    id "edu.wpi.first.GradleRIO" version "${wpiVersion}" // WPI version comes from gradle.properties
 }
 
 def platform = DefaultNativePlatform.currentOperatingSystem.toFamilyName()
@@ -13,7 +11,7 @@ def platform = DefaultNativePlatform.currentOperatingSystem.toFamilyName()
 repositories {
     mavenCentral()
     mavenLocal()
-    maven {url 'http://maven.icm.edu.pl/artifactory/repo/'}
+    maven {url 'https://maven.icm.edu.pl/artifactory/repo/'}
     maven {url 'https://frcmaven.wpi.edu/artifactory/release/'}
 }
 
