@@ -24,11 +24,11 @@ public class DisplayOverlay implements FrameProcessor {
     public static final boolean FLAG_DEBUGLINE = false;
     public static final boolean FLAG_ISPIZZA = false;
     public static final boolean FLAG_SMARTDASHBOARD = false;
-    public static final boolean FLAG_BALL_TEXT_LABELS = true;
+    public static final boolean FLAG_BALL_TEXT_LABELS = false;
     public static final boolean FLAG_DEBUG_ANGLE_IN_CENTER = false;//TODO: Make changeable
     public static final boolean FLAG_CROPPING_VISION_INPUT_DEBUGGING = false;
     public static final boolean FLAG_DEBUG_ALL_BALLS_INFO = false;
-    public static final boolean FIND_BALLS = true;
+    public static final boolean FIND_BALLS = false;
 
     //COLORS
     public static final Scalar RED = new Scalar(0,0,255,255);

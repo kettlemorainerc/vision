@@ -138,7 +138,7 @@ public class Main {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                logger_.log(Level.INFO, "FPS:" + frames_.getAndSet(0) / 10);
+                logger_.log(Level.INFO, "FPS: " + frames_.getAndSet(0) / 10);
             }
         }, 10000, 10000);
 

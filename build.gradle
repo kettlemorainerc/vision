@@ -11,9 +11,7 @@ plugins {
 //    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest("org.usfirst.frc.team2077.video.Main")
 //}
 
-def targetConfiguration = "aimingFEThree2020";
-targetCompatibility = (JavaVersion.VERSION_11)
-sourceCompatibility = (JavaVersion.VERSION_11)
+def targetConfiguration = "squedgy.test";
 
 task copyVideoData(type: Copy) {
     from("VIDEO_DATA") {
@@ -42,7 +40,7 @@ repositories {
     jcenter()
     mavenLocal()
     maven {
-        url 'http://maven.icm.edu.pl/artifactory/repo/'
+        url 'https://maven.icm.edu.pl/artifactory/repo/'
     }
 }
 

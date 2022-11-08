@@ -69,9 +69,7 @@ public class NTMain extends Main {
             videoFrame_.revalidate();
             videoFrame_.repaint();
             Set<VideoView> views = new HashSet<>();
-            for (VideoView v : view.getViews()) {
-                views.add(v);
-            }
+            views.addAll(view.getViews());
             views.addAll(mappedViews_);
             for (VideoSource source : sources_.values()) {
                 source.activateViews(views);
