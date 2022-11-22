@@ -28,7 +28,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.*;
 import java.util.regex.Matcher;
 
 import javax.swing.AbstractAction;
@@ -53,7 +53,7 @@ public class Main {
 //        System.loadLibrary( Core.NATIVE_LIBRARY_NAME );
     }
 
-    protected static final Logger logger_ = Logger.getLogger(Main.class.getName());
+    protected static final Logger logger_ = LoggerFactory.getLogger(Main.class);
 
     protected static JFrame visionFrame_;
     protected static Properties properties_;
@@ -80,12 +80,12 @@ public class Main {
                 views_.put(name, new VisionView(name, label, frameInfoPath, frameProcessor));
             }
             catch (Exception ex) {
-                logger_.log( Level.WARNING,  "Vision processor for view " + name + " startup failed.",  ex );
+                logger_.warn("Vision processor for view " + name + " startup failed.",  ex );
                 continue;
             }
         }
         if (views_.isEmpty()) {
-            logger_.log(Level.SEVERE, "No mapped views configured, exiting.");
+            logger_.error("No mapped views configured, exiting.");
             System.exit(1);
         }
     }

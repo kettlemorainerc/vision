@@ -2,7 +2,7 @@ package org.usfirst.frc.team2077.util;
 
 import com.squedgy.frc.team2077.april.tags.ByteImage;
 import com.squedgy.frc.team2077.april.tags.detection.Detector;
-import org.opencv.core.Mat;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 public class AprilTagUtils {

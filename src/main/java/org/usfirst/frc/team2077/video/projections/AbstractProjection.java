@@ -3,7 +3,9 @@ package org.usfirst.frc.team2077.video.projections;
 import java.awt.Dimension;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 
+import org.opencv.core.Point;
 import org.usfirst.frc.team2077.video.Main;
 import org.usfirst.frc.team2077.video.interfaces.RenderedView;
 import org.usfirst.frc.team2077.video.interfaces.RenderingProjection;
@@ -34,7 +36,7 @@ public abstract class AbstractProjection implements SourceProjection, RenderingP
     protected final double[] cameraOriginXYZ_;
     
     protected final boolean global_;
-    protected final Rectangle2D bounds_;
+    public final Rectangle2D bounds_;
     protected final boolean[][] mask_;
     protected final AffineTransform viewToRendering_;
 
@@ -271,7 +273,7 @@ public abstract class AbstractProjection implements SourceProjection, RenderingP
         // global/nominal transforms
         globalToNominal = multiply(/*azimuth*/rotateZ(-heading), /*horizontal to vertical*/rotateY(-polar));
         
-        forwardTransformGlobal_ = globalToNominal; // multiply(globalToNominal, forwardTransform_); 
+        forwardTransformGlobal_ = globalToNominal; // multiply(globalToNominal, forwardTransform_);
         
         
         fovAngleHorizontal_ = Double.parseDouble(Main.getProperties().getProperty(name_ + ".horizontal-fov", "" + defaultFOV)) * Math.PI / 180;
@@ -332,7 +334,9 @@ public abstract class AbstractProjection implements SourceProjection, RenderingP
         if (focalLength_ > 0) {
                 return focalLength_;
         }
-        return 1 / forwardProjection(fovAngleHorizontal_/2);
+        double fov = fovAngleHorizontal_;
+        double v = forwardProjection(fov / 2);
+        return 1 / v;
     }
 
     @Override
@@ -346,7 +350,7 @@ public abstract class AbstractProjection implements SourceProjection, RenderingP
         radius /= getFocalLength();
         
         double polar = backProjection(radius);
-        
+
         if (polar < 0) return null; // out of range
         
         return new double[] {mod(azimuth, 2*Math.PI), mod(polar, Math.PI)};
@@ -354,14 +358,13 @@ public abstract class AbstractProjection implements SourceProjection, RenderingP
     
     @Override
     public double[] sourceProjection(double world_o_clock, double world_from_center) { //TODO: warning about overriding this method and forwardProjection
-        
+
         double azimuth = world_o_clock;
         double radius = forwardProjection(world_from_center);
         
         if (radius < 0) return null; // out of range
        
         radius *= getFocalLength();
-        
         return transformPolarToCartesian(radius, azimuth);
     }
     
@@ -389,6 +392,7 @@ public abstract class AbstractProjection implements SourceProjection, RenderingP
         }
 
         if (mask_ != null) {
+            System.out.println("We have mask");
             int vpX = Math.max(0, Math.min(mask_.length-1, (int)Math.round(viewPixelX-.5)));
             int vpY = Math.max(0, Math.min(mask_[0].length-1, (int)Math.round(viewPixelY-.5)));
             if (!mask_[vpX][vpY]) {
@@ -600,5 +604,18 @@ public abstract class AbstractProjection implements SourceProjection, RenderingP
      */
     public static double[][] rotateZYX(double degreesZ, double degreesY, double degreesX) {
         return multiply(rotateZ(degreesZ), multiply(rotateY(degreesY), rotateX(degreesX)));
+    }
+
+    private static String couple(Object key, Object value) {
+        return "[" + key + "=" + value + "]";
+    }
+
+    protected static void print(Object... pairs) {
+        StringBuilder output = new StringBuilder("old ");
+        for(int i = 0 ; i < pairs.length; i+= 2) {
+            output.append(couple(pairs[i], pairs[i + 1]));
+        }
+
+        System.out.println(output);
     }
 }

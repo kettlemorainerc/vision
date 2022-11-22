@@ -60,6 +60,7 @@ public final class ImageSource extends AbstractSource implements VideoSource {
         }
         image_ = new BufferedImage( image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB );
         image_.createGraphics().drawImage( image, null, 0, 0 );
+        resolution_ = new Dimension(image.getWidth(), image.getHeight());
 
         fps_ = Double.parseDouble( Main.getProperties().getProperty( name_ + ".frames-per-second", ".25" ) );
     }

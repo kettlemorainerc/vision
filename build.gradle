@@ -32,7 +32,14 @@ tasks.withType(JavaExec) {
     finalizedBy(tasks.saveVideoData)
     workingDir "$buildDir${File.separator}tmp${File.separator}jniExtractDir"
     argsString(targetConfiguration)
-    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
+
+    def componenets = [
+            System.getProperty("java.library.path"),
+            projectDir,
+            "$buildDir${File.separator}tmp${File.separator}jniExtractDir",
+            "$projectDir${File.separator}opencv${File.separator}standard${File.separator}build${File.separator}lib${File.separator}Debug",
+    ]
+    systemProperty 'java.library.path', componenets.join(File.pathSeparator)
 }
 
 repositories {
@@ -47,10 +54,10 @@ repositories {
 run {
     dependsOn tasks.extractTestJNI
     dependsOn tasks.build
-    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
 
     classpath = sourceSets.main.runtimeClasspath
-    main = "org.usfirst.frc.team2077.video.Main"
+//    main = "org.usfirst.frc.team2077.video.Main"
+    main = "org.usfirst.frc.team2077.Startup"
 }
 
 dependencies {
@@ -65,15 +72,36 @@ dependencies {
     implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
     implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-core', version: '1.4.0'
     implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-swing', version: '0.9.0'
-    implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
+
+//    implementation group: 'org.opencv', name: 'opencv-java', version: '3.2.0'
+//    implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
+
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
     implementation files("april-tag/april-tags-2077.jar")
+
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.3'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.4'
 
     if(DefaultNativePlatform.currentOperatingSystem.linux) {
         implementation files("network-tables${File.separator}ntcore-java-4.0.0.jar")
         implementation files("network-tables${File.separator}ntcore-jni-4.0.0-all.jar")
         implementation files("network-tables${File.separator}wpiutil-java-3.0.0.jar")
+    }
+
+    implementation files("opencv/standard/build/bin/opencv-460.jar")
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        showStackTraces = true
+        showExceptions = true
+        exceptionFormat = "FULL"
     }
 }
 

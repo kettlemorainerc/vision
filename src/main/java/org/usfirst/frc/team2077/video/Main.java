@@ -33,13 +33,13 @@ public class Main {
 
     public static final Logger logger_ = Logger.getLogger(Main.class.getName());
 
-    protected static Properties properties_;
+    public static Properties properties_;
 
     protected static ByteOrder byteOrder_;
 
     protected static AtomicInteger frames_ = new AtomicInteger();
 
-    protected static Map<String, VideoSource> sources_ = new LinkedHashMap<>();
+    public static Map<String, VideoSource> sources_ = new LinkedHashMap<>();
     protected static Map<String, VideoView> views_ = new LinkedHashMap<>();
     protected static Collection<VideoView> mappedViews_ = new HashSet<>();
 

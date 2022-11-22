@@ -1,5 +1,6 @@
 package org.usfirst.frc.team2077.util;
 
+import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 public enum MatColor {

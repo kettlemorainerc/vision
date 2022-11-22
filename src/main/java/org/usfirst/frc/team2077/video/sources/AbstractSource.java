@@ -1,7 +1,6 @@
 package org.usfirst.frc.team2077.video.sources;
 
 import java.awt.Dimension;
-import java.awt.geom.AffineTransform;
 import java.io.ByteArrayOutputStream;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -28,7 +27,6 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
-import org.usfirst.frc.team2077.vision.processors.DisplayOverlay;
 
 /**
  * Base {@link VideoSource} implementation. Includes code to execute a startup command on a remote host as a part of the
@@ -84,10 +82,6 @@ public abstract class AbstractSource implements VideoSource {
     private Object execLock_ = new Object() {
     };
 
-    // camera placement // TODO: remove
-    public final double cameraX_;
-    public final double cameraY_;
-    public final double cameraZ_;
 
     // camera transform
     protected final SourceProjection projection_;
@@ -96,7 +90,7 @@ public abstract class AbstractSource implements VideoSource {
 
     protected Set<RenderedView> views_ = new HashSet<>();
 
-    protected final Map<String, int[]> viewMap_ = new LinkedHashMap<>();
+    public final Map<String, int[]> viewMap_ = new LinkedHashMap<>();
 
     protected long execBaseTime_;
 
@@ -110,15 +104,15 @@ public abstract class AbstractSource implements VideoSource {
 
         name_ = name;
 
-        try{
-            if(DisplayOverlay.FLAG_ISPIZZA && Main.getProperties().getProperty(name_+".remotePizzaPort")!=null){
-                Main.getProperties().setProperty(name_+".remote", Main.getProperties().getProperty(name_+".remote").substring(0,9)+Main.getProperties().getProperty(name_+".remotePizzaPort"));
-                Main.getProperties().setProperty(name_+".rotate", "45");//Main.getProperties().getProperty("AimingView"+".rotatePizza"));//TODO, MAKE THIS WORK
-            }
-        }catch(Exception e){
-            System.out.println("[NOT VITAL] Attempting to override remote from properties with data from FLAG_ISPIZZA was unsuccessful. Reverting to .properties control");
-            e.printStackTrace();
-        }
+//        try{
+//            if(DisplayOverlay.FLAG_ISPIZZA && Main.getProperties().getProperty(name_+".remotePizzaPort")!=null){
+//                Main.getProperties().setProperty(name_+".remote", Main.getProperties().getProperty(name_+".remote").substring(0,9)+Main.getProperties().getProperty(name_+".remotePizzaPort"));
+//                Main.getProperties().setProperty(name_+".rotate", "45");//Main.getProperties().getProperty("AimingView"+".rotatePizza"));//TODO, MAKE THIS WORK
+//            }
+//        }catch(Exception e){
+//            System.out.println("[NOT VITAL] Attempting to override remote from properties with data from FLAG_ISPIZZA was unsuccessful. Reverting to .properties control");
+//            e.printStackTrace();
+//        }
 
         // remote server access
         remote_ = Main.getProperties().getProperty( name_ + ".remote" );
@@ -129,19 +123,6 @@ public abstract class AbstractSource implements VideoSource {
         if ( user_ != null && remote_ != null && command_ != null ) {
             System.out.println( "INFO:" + name_ + ": " + user_ + "@" + remote_ + " " + command_ );
         }
-
-
-
-        // camera location
-        char cameraOrientation = Main.getProperties().getProperty( name_ + ".camera-orientation", "N" ).toUpperCase().charAt( 0 ); // N|S|E|W
-        AffineTransform worldToCamera = new AffineTransform();
-        worldToCamera.rotate( (Math.PI / 180.) * (cameraOrientation == 'E' ? 90. : cameraOrientation == 'S' ? 180. : cameraOrientation == 'W' ? 270. : 0.) );
-        double[] cameraPosition = {Double.parseDouble( Main.getProperties().getProperty( name_ + ".camera-EW-position", "0.0" ) ),
-                                   Double.parseDouble( Main.getProperties().getProperty( name_ + ".camera-NS-position", "0.0" ) )};
-        worldToCamera.transform( cameraPosition, 0, cameraPosition, 0, 1 );
-        cameraX_ = cameraPosition[0];
-        cameraY_ = cameraPosition[1];
-        cameraZ_ = Double.parseDouble( Main.getProperties().getProperty( name_ + ".camera-height", "24.0" ) );
 
         SourceProjection projection = null;
         try {
@@ -340,10 +321,6 @@ public abstract class AbstractSource implements VideoSource {
             buildMap( view ); // TODO: run this in a BG thread
         }
 
-        // if (!view.isLive()) {
-        // return;
-        // }
-
         int[] viewMap = viewMap_.get( view.getName() );
         if ( viewMap.length == 0 ) {
             // nothing from this video stream appears in the view
@@ -361,7 +338,7 @@ public abstract class AbstractSource implements VideoSource {
      * 
      * @param view View whose pixel source map is being updated.
      */
-    protected void buildMap( RenderedView view ) {
+    public void buildMap(RenderedView view) {
 
         int[] viewMapTmp = new int[view.getResolution().width * view.getResolution().height];
         for ( int i = 0; i < viewMapTmp.length; i++ ) {
