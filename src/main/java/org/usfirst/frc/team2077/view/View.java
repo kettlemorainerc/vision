@@ -2,7 +2,7 @@ package org.usfirst.frc.team2077.view;
 
 import org.bytedeco.javacv.*;
 import org.bytedeco.javacv.Frame;
-import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_core.*;
 import org.bytedeco.opencv.opencv_visualisation;
 import org.usfirst.frc.team2077.processor.Processor;
 import org.usfirst.frc.team2077.source.FrameSource;
@@ -186,6 +186,25 @@ public class View extends JComponent {
         // }
         //
         // frame.repaint();
+    }
+
+    private final Mat localGpuImg = new Mat();
+    private final Mat localGpuOverlay = new Mat();
+    public void process(GpuMat bgraImg) {
+        if(!cf.isVisible()) return;
+        // if((!cf.isVisible() && !frame.isVisible()) || sourceMapping.isEmpty() || byteBufDataA == null) return;
+        GpuMat overlay = frameProcessor.process(bgraImg);
+
+        bgraImg.download(localGpuImg);
+        overlay.download(localGpuOverlay);
+
+        Frame imgFrame = converter.convert(localGpuImg);
+        Frame overlayFrame = converter.convert(localGpuOverlay);
+
+        cf.showImage(imgFrame);
+        cf.showImage(overlayFrame);
+
+        cf.repaint();
     }
 
     // private void readMatToRgb(Mat a, BufferedImage aImg, Mat b, BufferedImage bImg) {

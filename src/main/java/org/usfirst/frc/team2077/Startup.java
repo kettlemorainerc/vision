@@ -25,7 +25,9 @@ public class Startup {
     public static final boolean CUDA_ENABLED;
 
     static {
-        CUDA_ENABLED = getCudaEnabledDeviceCount() > 0;
+        int count = getCudaEnabledDeviceCount();
+        CUDA_ENABLED = count > 0;
+        logger.info("we have {} cuda devices", count);
     }
 
     public static Map<String, FrameSource> sources;

@@ -2,11 +2,12 @@ package org.usfirst.frc.team2077.source;
 
 import org.bytedeco.javacpp.*;
 import org.bytedeco.opencv.global.opencv_core;
-import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_core.*;
 import org.freedesktop.gstreamer.*;
 import org.freedesktop.gstreamer.Buffer;
 import org.freedesktop.gstreamer.elements.AppSink;
 import org.slf4j.*;
+import org.usfirst.frc.team2077.Startup;
 import org.usfirst.frc.team2077.util.SuperProperties;
 import org.usfirst.frc.team2077.view.View;
 
@@ -40,7 +41,7 @@ public class GStreamerSource extends FrameSource {
     private Dimension dimension;
     private AppSink sink;
     private Pipeline pipeline;
-    private Mat output;
+    private final SampleProcessor processor;
     private final Timer fpsLogging = new Timer();
 
     public GStreamerSource(SuperProperties runProps, String name) {
@@ -50,6 +51,9 @@ public class GStreamerSource extends FrameSource {
         if(pipelineStr == null) throw new IllegalStateException("Cannot have a gstreamer source without a 'pipeline' property");
 
         this.pipelineStr = checkForCaptureFile(props, pipelineStr, name);
+
+        if(Startup.CUDA_ENABLED) processor = new GpuMatProcessor();
+        else processor = new MatProcessor();
     }
 
     @Override public Dimension getResolution() {return dimension;}
@@ -82,15 +86,9 @@ public class GStreamerSource extends FrameSource {
     }
 
     @Override protected void processFrame() {
-        logger.info("processing frame");
-        if(dimension == null || output == null) return;
-        logger.info("actually tho");
+        if(dimension == null) return;
 
-        Mat out = output;
-        for(View v : myViews) v.process(out);
-        frames.getAndIncrement();
-        output = null;
-        System.gc();
+        processor.processFrame();
     }
 
     private FlowReturn sampleReady(AppSink sink) {
@@ -101,8 +99,6 @@ public class GStreamerSource extends FrameSource {
     }
 
     private final AtomicInteger frames = new AtomicInteger();
-    private Sample previous;
-    private Buffer buff;
 
     private void processSample(Sample sample) {
         if(dimension == null) {
@@ -127,18 +123,7 @@ public class GStreamerSource extends FrameSource {
             }
         }
 
-        if(buff != null) {
-            buff.unmap();
-            previous.dispose();
-        }
-
-        previous = sample;
-        buff = sample.getBuffer();
-        ByteBuffer bb = buff.map(false);
-        bb.rewind();
-
-        Mat next = new Mat(dimension.height, dimension.width, opencv_core.CV_8UC4, new BytePointer(bb));
-        output = next;
+        processor.process(sample);
     }
 
     @Override protected void cleanup() {
@@ -176,5 +161,79 @@ public class GStreamerSource extends FrameSource {
                 .optionalEnd()
                 .appendOffsetId()
                 .toFormatter();
+    }
+
+    private abstract class SampleProcessor {
+        Buffer buff;
+        Sample prev;
+
+        void populateBuff(Sample from) {
+            if(prev != null) {
+                buff.unmap();
+                prev.dispose();
+            }
+
+            prev = from;
+            buff = from.getBuffer();
+        }
+
+        abstract void process(Sample sample);
+        abstract void processFrame();
+    }
+
+    private class MatProcessor extends SampleProcessor {
+        private final Object updatingOutput = new Object();
+        Mat output;
+        @Override void process(Sample sample) {
+            synchronized(updatingOutput) {
+                this.populateBuff(sample);
+                output = new Mat(dimension.height, dimension.width, opencv_core.CV_8UC4, new BytePointer(buff.map(false)));
+            }
+        }
+
+        @Override void processFrame() {
+            if(output == null) return;
+
+            synchronized(updatingOutput) {
+                for(View v : myViews) {
+                    v.process(output);
+                }
+
+                frames.incrementAndGet();
+                buff.unmap();
+                buff = null;
+                prev.dispose();
+                prev = null;
+                output = null;
+                System.gc();
+            }
+        }
+    }
+
+    private class GpuMatProcessor extends SampleProcessor {
+        private final Object updatingOutput = new Object();
+        GpuMat output = new GpuMat();
+        @Override void process(Sample sample) {
+            synchronized(updatingOutput) {
+                this.populateBuff(sample);
+                output = new GpuMat(dimension.height, dimension.width, opencv_core.CV_8UC4, new BytePointer(buff.map(false)));
+            }
+        }
+
+        @Override void processFrame() {
+            synchronized(updatingOutput) {
+                for(View v : myViews) {
+                    v.process(output);
+                }
+
+                frames.incrementAndGet();
+                buff.unmap();
+                buff = null;
+                prev.dispose();
+                prev = null;
+                output = null;
+                System.gc();
+            }
+        }
     }
 }
