@@ -38,6 +38,7 @@ tasks.withType(JavaExec) {
             projectDir,
             "$buildDir${File.separator}tmp${File.separator}jniExtractDir",
             "$projectDir${File.separator}opencv${File.separator}standard${File.separator}build${File.separator}lib${File.separator}Debug",
+            "$projectDir${File.separator}opencv${File.separator}standard${File.separator}build${File.separator}lib",
     ]
     systemProperty 'java.library.path', componenets.join(File.pathSeparator)
 }
@@ -90,6 +91,7 @@ dependencies {
     }
 
     implementation files("opencv/standard/build/bin/opencv-460.jar")
+    implementation group: 'org.bytedeco', name: 'javacv-platform', version: '1.5.8'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.0'

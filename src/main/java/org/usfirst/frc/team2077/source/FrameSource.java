@@ -1,6 +1,7 @@
 package org.usfirst.frc.team2077.source;
 
 import com.jcraft.jsch.Session;
+import org.bytedeco.opencv.opencv_core.MatExpr;
 import org.slf4j.*;
 import org.usfirst.frc.team2077.projection.*;
 import org.usfirst.frc.team2077.util.*;
@@ -148,7 +149,7 @@ public abstract class FrameSource extends Thread {
         )
                 .newInstance(runProps, against);
 
-        if(renderProjection.forward != null) {
+        if(renderProjection.forward != null && against.projectionTransformation != null) {
             for (int y = 0; y < against.projectionTransformation.rows(); y++) {
                 for(int x = 0; x < against.projectionTransformation.cols(); x++) {
                     against.projectionTransformation.put(y, x, renderProjection.forward[y][x]);

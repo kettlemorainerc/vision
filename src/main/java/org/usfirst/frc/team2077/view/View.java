@@ -1,6 +1,9 @@
 package org.usfirst.frc.team2077.view;
 
-import org.opencv.core.*;
+import org.bytedeco.javacv.*;
+import org.bytedeco.javacv.Frame;
+import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_visualisation;
 import org.usfirst.frc.team2077.processor.Processor;
 import org.usfirst.frc.team2077.source.FrameSource;
 import org.usfirst.frc.team2077.util.*;
@@ -14,6 +17,8 @@ import java.nio.*;
 
 import org.slf4j.*;
 
+import static org.bytedeco.opencv.global.opencv_core.CV_64F;
+
 public class View extends JComponent {
     private static final Logger logger = LoggerFactory.getLogger(View.class);
 
@@ -22,7 +27,7 @@ public class View extends JComponent {
 
     public final int width, height;
     public final Class<?> projection;
-    public final Mat projectionTransformation;
+    public org.opencv.core.Mat projectionTransformation;
     private final Processor frameProcessor;
     public IndexMap sourceMapping;
     private final boolean interpolate;
@@ -34,10 +39,13 @@ public class View extends JComponent {
     private int[] imgData, overlayData;
     private Graphics2D overlayGraphics;
 
+    public final CanvasFrame cf;
+    private final OpenCVFrameConverter.ToMat converter;
+
     public View(SuperProperties runProperties, String name, FrameSource source) {
         SuperProperties myProps = new SuperProperties(runProperties, name);
         this.frame = new JFrame();
-        frame.add(this);
+        this.frame.add(this);
         this.setBackground(Color.black);
         this.setOpaque(true);
 
@@ -54,9 +62,18 @@ public class View extends JComponent {
         frame.setPreferredSize(new Dimension(width, height));
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
+        converter = new OpenCVFrameConverter.ToMat();
+        cf = new CanvasFrame("Penis");
+        cf.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        cf.setVisible(false);
+        cf.setPreferredSize(new Dimension(width, height));
+        cf.setMinimumSize(new Dimension(width, height));
+        // cf.setVisible(true);
+        // cf.setAlwaysOnTop(true);
+
         try {
             projection = myProps.getReferencedClass("projection");
-            projectionTransformation = new Mat(3, 3, CvType.CV_64F);
+            // projectionTransformation = new org.opencv.core.Mat(3, 3, CV_64F);
             Class<?> frame = myProps.getReferencedClass("frame-processor");
 
             frameProcessor = (Processor) frame.getConstructor(
@@ -146,55 +163,65 @@ public class View extends JComponent {
     private static final Color clear = new Color(0, 0, 0, 0);
 
     public void process(Mat bgraImg) {
-        if(!frame.isVisible() || sourceMapping.isEmpty() || byteBufDataA == null) return;
+        if(!cf.isVisible()) return;
+        // if((!cf.isVisible() && !frame.isVisible()) || sourceMapping.isEmpty() || byteBufDataA == null) return;
         tmpOverlay = frameProcessor.process(bgraImg);
 
-        if(tmpOverlay != null) {
-            readMatToRgb(bgraImg, img, tmpOverlay, this.overlay);
-        } else {
-            readMatToRgb(bgraImg, img);
+        Frame actual = converter.convert(bgraImg);
+        Frame overlay = converter.convert(tmpOverlay);
 
-            overlayGraphics.setColor(clear);
-            overlayGraphics.fill(overlayGraphics.getClipBounds());
-            overlay.flush();
-        }
+        cf.showImage(actual);
+        cf.showImage(overlay);
 
-        frame.repaint();
+        cf.repaint();
+
+        // if(tmpOverlay != null) {
+        //     readMatToRgb(bgraImg, img, tmpOverlay, this.overlay);
+        // } else {
+        //     readMatToRgb(bgraImg, img);
+        //
+        //     overlayGraphics.setColor(clear);
+        //     overlayGraphics.fill(overlayGraphics.getClipBounds());
+        //     overlay.flush();
+        // }
+        //
+        // frame.repaint();
     }
 
-    private void readMatToRgb(Mat a, BufferedImage aImg, Mat b, BufferedImage bImg) {
-        a.get(0, 0, byteBufDataA);
-        b.get(0, 0, byteBufDataB);
-        intBufA.rewind();
-        intBufB.rewind();
-
-        int rows = a.rows();
-        int cols = a.cols();
-        for(int row = 0; row < rows; row++) {
-            for(int col = 0; col < cols; col++) {
-                aImg.setRGB(col, row, intBufA.get());
-                bImg.setRGB(col, row, intBufB.get());
-            }
-        }
-
-        aImg.flush();
-        bImg.flush();
-    }
-
-    private void readMatToRgb(Mat mat, BufferedImage img) {
-        mat.get(0, 0, byteBufDataA);
-        intBufA.rewind();
-
-        int rows = mat.rows();
-        int cols = mat.cols();
-        for(int row = 0; row < rows; row++) {
-            for(int col = 0; col < cols; col++) {
-                img.setRGB(col, row, intBufA.get());
-            }
-        }
-
-        img.flush();
-    }
+    // private void readMatToRgb(Mat a, BufferedImage aImg, Mat b, BufferedImage bImg) {
+    //
+    //     a.get(0, 0, byteBufDataA);
+    //     b.get(0, 0, byteBufDataB);
+    //     intBufA.rewind();
+    //     intBufB.rewind();
+    //
+    //     int rows = a.rows();
+    //     int cols = a.cols();
+    //     for(int row = 0; row < rows; row++) {
+    //         for(int col = 0; col < cols; col++) {
+    //             aImg.setRGB(col, row, intBufA.get());
+    //             bImg.setRGB(col, row, intBufB.get());
+    //         }
+    //     }
+    //
+    //     aImg.flush();
+    //     bImg.flush();
+    // }
+    //
+    // private void readMatToRgb(Mat mat, BufferedImage img) {
+    //     mat.get(0, 0, byteBufDataA);
+    //     intBufA.rewind();
+    //
+    //     int rows = mat.rows();
+    //     int cols = mat.cols();
+    //     for(int row = 0; row < rows; row++) {
+    //         for(int col = 0; col < cols; col++) {
+    //             img.setRGB(col, row, intBufA.get());
+    //         }
+    //     }
+    //
+    //     img.flush();
+    // }
 
     private static final ColorModel COLOR_MODEL;
     private static final ColorModel OVERLAY_MODEL;

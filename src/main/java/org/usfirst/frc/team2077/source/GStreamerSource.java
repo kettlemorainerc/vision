@@ -1,11 +1,11 @@
 package org.usfirst.frc.team2077.source;
 
+import org.bytedeco.javacpp.*;
+import org.bytedeco.opencv.global.opencv_core;
+import org.bytedeco.opencv.opencv_core.Mat;
 import org.freedesktop.gstreamer.*;
 import org.freedesktop.gstreamer.Buffer;
 import org.freedesktop.gstreamer.elements.AppSink;
-import org.freedesktop.gstreamer.lowlevel.GstAPI;
-import org.opencv.core.*;
-import org.opencv.imgproc.Imgproc;
 import org.slf4j.*;
 import org.usfirst.frc.team2077.util.SuperProperties;
 import org.usfirst.frc.team2077.view.View;
@@ -82,7 +82,9 @@ public class GStreamerSource extends FrameSource {
     }
 
     @Override protected void processFrame() {
+        logger.info("processing frame");
         if(dimension == null || output == null) return;
+        logger.info("actually tho");
 
         Mat out = output;
         for(View v : myViews) v.process(out);
@@ -99,6 +101,9 @@ public class GStreamerSource extends FrameSource {
     }
 
     private final AtomicInteger frames = new AtomicInteger();
+    private Sample previous;
+    private Buffer buff;
+
     private void processSample(Sample sample) {
         if(dimension == null) {
             Caps caps = sample.getCaps();
@@ -113,24 +118,27 @@ public class GStreamerSource extends FrameSource {
             }}, interval, interval);
 
             for(View v : myViews) {
-                v.frame.revalidate();
-                v.frame.pack();
-                v.frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-                v.frame.setVisible(true);
+                v.cf.revalidate();
+                v.cf.pack();
+                v.cf.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                v.cf.setVisible(true);
 
                 v.buildSourceMapping(props.unprefixed(), this);
             }
         }
 
-        Buffer buffer = sample.getBuffer();
-        ByteBuffer bb = buffer.map(false);
+        if(buff != null) {
+            buff.unmap();
+            previous.dispose();
+        }
+
+        previous = sample;
+        buff = sample.getBuffer();
+        ByteBuffer bb = buff.map(false);
         bb.rewind();
 
-        Mat next = new Mat(dimension.height, dimension.width, CvType.CV_8UC4, bb);
+        Mat next = new Mat(dimension.height, dimension.width, opencv_core.CV_8UC4, new BytePointer(bb));
         output = next;
-
-        buffer.unmap();
-        sample.dispose();
     }
 
     @Override protected void cleanup() {

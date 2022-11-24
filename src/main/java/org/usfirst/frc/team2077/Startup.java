@@ -3,7 +3,6 @@ package org.usfirst.frc.team2077;
 import com.squedgy.frc.team2077.april.tags.AprilTag;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import org.freedesktop.gstreamer.Gst;
-import org.opencv.core.Core;
 import org.opencv.osgi.OpenCVNativeLoader;
 import org.slf4j.*;
 import org.usfirst.frc.team2077.source.FrameSource;
@@ -17,35 +16,38 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.bytedeco.opencv.global.opencv_core.getCudaEnabledDeviceCount;
+
 public class Startup {
     private static final Logger logger = LoggerFactory.getLogger(Startup.class);
     public static NetworkTableInstance networktables;
     private static final String PROPERTIES_ENV_VAR = "PROPERTIES";
-    private static final Timer timer = new Timer();
+    public static final boolean CUDA_ENABLED;
+
+    static {
+        CUDA_ENABLED = getCudaEnabledDeviceCount() > 0;
+    }
 
     public static Map<String, FrameSource> sources;
     public static List<View> views;
 
     public static void main(String[] args) throws ClassNotFoundException, IOException {
-
-        new OpenCVNativeLoader().init();
-        AprilTag.initialize();
+        // new OpenCVNativeLoader().init();
+        // AprilTag.initialize();
         Gst.init();
 
         SuperProperties runProperties = new SuperProperties(getFirstValidProperties(args));
         initializeNetworkTables(runProperties);
 
-        sources = buildInitialSources(runProperties);
+        sources = buildRunSources(runProperties);
         logger.info("Sources {}", sources);
-        views = buildInitialViews(runProperties);
+        views = buildRunViews(runProperties);
         logger.info("Views {}", views);
 
-        sources.forEach((ignored, source) -> {
-            source.start();
-        });
+        sources.forEach((ignored, source) -> source.start());
     }
 
-    private static Map<String, FrameSource> buildInitialSources(SuperProperties runProps) throws ClassNotFoundException {
+    private static Map<String, FrameSource> buildRunSources(SuperProperties runProps) throws ClassNotFoundException {
         List<FrameSource> sources = new LinkedList<>();
         String[] sourceTargets = runProps.getDelimited("sources", "\\|");
 
@@ -70,7 +72,7 @@ public class Startup {
         return sources.stream().collect(Collectors.toMap(s -> s.name, Function.identity()));
     }
 
-    private static List<View> buildInitialViews(SuperProperties runProps) {
+    private static List<View> buildRunViews(SuperProperties runProps) {
         List<View> views = new LinkedList<>();
         String[] targetViews = runProps.getDelimited("views", "\\|");
 
