@@ -63,7 +63,7 @@ public class View extends JComponent {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         converter = new OpenCVFrameConverter.ToMat();
-        cf = new CanvasFrame("Penis");
+        cf = new CanvasFrame("Stuffies");
         cf.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         cf.setVisible(false);
         cf.setPreferredSize(new Dimension(width, height));
