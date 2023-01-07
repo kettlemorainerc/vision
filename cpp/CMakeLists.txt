@@ -18,6 +18,8 @@ include_directories(
 
 add_executable(vision
     ${PROJECT_SOURCE_DIR}/src/main.cpp
+    ${PROJECT_SOURCE_DIR}/src/process.cpp
+
     # cpp-parser
     ${PROJECT_SOURCE_DIR}/../external/cpp-properties/src/Properties.cpp
     ${PROJECT_SOURCE_DIR}/../external/cpp-properties/src/PropertiesParser.cpp
