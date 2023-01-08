@@ -4,5 +4,5 @@
 #include "./run.hpp"
 
 namespace process {
-    void processFrame(cv::Mat &frame, RunState &state);
+    void processFrame(cv::Mat *frame, RunState *state);
 }

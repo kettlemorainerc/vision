@@ -18,3 +18,7 @@
 	path = external/cpp-properties
 	url = https://github.com/fredyw/cpp-properties.git
 	branch = master
+[submodule "external/qt-gstreamer"]
+	path = external/qt-gstreamer
+	url = https://github.com/GStreamer/qt-gstreamer.git
+	branch = master
