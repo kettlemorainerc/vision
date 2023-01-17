@@ -5,6 +5,8 @@ project(Vision
     DESCRIPTION "Team 2077"
 )
 
+set(MAP_IMPORTED_CONFIG_MinSizeRel Release)
+set(MAP_IMPORTED_CONFIG_RelWithDebInfo Debug)
 set(EXTERN_PATH ${PROJECT_SOURCE_DIR}/external)
 set(CPP_PATH ${PROJECT_SOURCE_DIR}/cpp)
 
@@ -39,16 +41,33 @@ add_executable(vision
     ${EXTERN_PATH}/cpp-properties/src/PropertiesUtils.cpp
 )
 
+set_property(TARGET vision PROPERTY CXX_STANDARD 20)
+
 get_cmake_property(NAMES VARIABLES)
 list(SORT NAMES)
 foreach(var ${NAMES})
-	if(var MATCHES "^G.*LIBRAR(Y|IES)$")
+	if(var MATCHES "^G(LIB).*$")
 		message(STATUS ${var}=${${var}})
 	endif()
 endforeach()
+# list(SORT NAMES)
+# foreach(var ${NAMES})
+# 	if(var MATCHES "^O[pP][eE][nN][Cc][Vv].*$")
+# 		message(STATUS ${var}=${${var}})
+# 	endif()
+# endforeach()
+
+target_link_directories(vision
+	PUBLIC ${OpenCV_LIB_PATH}
+	PUBLIC ${OpenCV_CONFIG_PATH}
+)
+
+set_property(TARGET ${OpenCV_LIBRARIES} PROPERTY MAP_IMPORTED_CONFIG_MINSIZEREL Debug)
+set_property(TARGET ${OpenCV_LIBRARIES} PROPERTY MAP_IMPORTED_CONFIG_RELWITHDEBINFO Debug)
+
 
 target_link_libraries(vision
-	${OpenCV_LIBS}
+	${OpenCV_LIBRARIES}
 	${GSTREAMER_LIBRARY}
 	${GLIB2_LIBRARIES}
 	${GOBJECT_LIBRARIES}
