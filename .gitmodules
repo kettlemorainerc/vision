@@ -10,10 +10,6 @@
 	path = external/gstreamer
 	url = https://github.com/GStreamer/gstreamer.git
 	branch = master
-[submodule "external/opencv"]
-	path = external/opencv
-	url = https://github.com/opencv/opencv.git
-	branch = master
 [submodule "external/cpp-properties"]
 	path = external/cpp-properties
 	url = https://github.com/fredyw/cpp-properties.git
@@ -21,8 +17,4 @@
 [submodule "external/qt-gstreamer"]
 	path = external/qt-gstreamer
 	url = https://github.com/GStreamer/qt-gstreamer.git
-	branch = master
-[submodule "external/vtk"]
-	path = external/vtk
-	url = https://gitlab.kitware.com/vtk/vtk.git
 	branch = master
