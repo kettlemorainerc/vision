@@ -8,14 +8,36 @@
 #include <chrono>
 #include <thread>
 #include <gst/gst.h>
+#include <glib.h>
 #include <gst/app/gstappsink.h>
+#include <opencv2/aruco.hpp>
 
 #include "./main.hpp"
 #include "./run.hpp"
 #include "./process.hpp"
-#include <opencv2/aruco.hpp>
 
 using namespace cv;
+
+template <int width, int height>
+const inline static void to_mat(GstMapInfo *sample, Mat **ret) {
+	Mat *prev = *ret;
+	*ret = new Mat(height, width, CV_8UC4, sample->data);
+
+	if(prev) {
+		delete prev;
+	}
+}
+
+template <std::size_t width, std::size_t height>
+const inline static void to_mat(GstMapInfo *sample, cuda::GpuMat **ret) {
+	cuda::GpuMat *prev = *ret;
+	Mat base(height, width, CV_8UC4, sample->data);
+	*ret = new cuda::GpuMat(base);
+
+	if(prev) {
+		delete prev;
+	}
+}
 
 template <class MatType, int width, int height>
 void process_sample(GstSample *sample, RunState *state) {
@@ -24,7 +46,7 @@ void process_sample(GstSample *sample, RunState *state) {
 	static GstBuffer *buffer = nullptr;
 	static GstMapInfo *info = nullptr;
 
-	static MatType frame(height, width, CV_8UC4);
+	static MatType *frame = nullptr;
 
 	prev_buf = buffer;
 	buffer = gst_sample_get_buffer(sample);
@@ -48,8 +70,8 @@ void process_sample(GstSample *sample, RunState *state) {
 	}
 
 
-	frame.data = info->data;
-	process::processFrame(&frame, state);
+	to_mat<width, height>(info, &frame);
+	process::processFrame(frame, state);
 }
 
 static const cv::Ptr<cv::aruco::DetectorParameters> getParams() {
@@ -185,11 +207,16 @@ int main(int argCount, char* argv[]) {
 
 	static const int width = 1920;
 	static const int height = 1080;
-	if(cv::cuda::getCudaEnabledDeviceCount() > 0) {
+
+	if(false && cv::cuda::getCudaEnabledDeviceCount() > 0) {
 		team2077_print("Cuda detected, using GpuMats");
 		main_loop<cv::cuda::GpuMat, width, height>(appsink, &state);
 	} else {
-		team2077_print("Cuda not detected, using normal Mat");
+		if(cv::cuda::getCudaEnabledDeviceCount() == -1) {
+			team2077_print("Cuda not enabled, or not compatible, using normal Mat");
+		} else {
+			team2077_print("No Cuda devices detected, using normal Mat");
+		}
 		main_loop<cv::Mat, width, height>(appsink, &state);
 	}
 }

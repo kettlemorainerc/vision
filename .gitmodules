@@ -18,3 +18,7 @@
 	path = external/qt-gstreamer
 	url = https://github.com/GStreamer/qt-gstreamer.git
 	branch = master
+[submodule "external/vtk"]
+	path = external/vtk
+	url = https://gitlab.kitware.com/vtk/vtk.git
+	branch = master

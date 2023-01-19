@@ -1,7 +1,7 @@
-#include <process.hpp>
 #include <opencv2/aruco.hpp>
+#include "./process.hpp"
 
-static void display(cv::Mat mat, RunState *state) {
+static void display(cv::InputArray &mat, RunState *state) {
     static auto difference = std::chrono::seconds(10);
     cv::imshow(window_name, mat);
     state->frame_count ++;
@@ -14,9 +14,9 @@ static void display(cv::Mat mat, RunState *state) {
 }
 
 template <class MatType>
-MatType searchImage(MatType *frame, RunState *state) {
+MatType searchImage(MatType &frame, RunState *state) {
     MatType ret;
-    cv::cvtColor(*frame, ret, cv::COLOR_BGRA2GRAY);
+    cv::cvtColor(frame, ret, cv::COLOR_BGRA2GRAY);
 
     std::vector<std::vector<cv::Point2f>> corners;
     std::vector<int> ids;
@@ -28,15 +28,16 @@ MatType searchImage(MatType *frame, RunState *state) {
 }
 
 void process::processFrame(cv::Mat *frame, RunState *state) {
-    cv::Mat toDisplay = searchImage<cv::Mat>(frame, state);
+    cv::Mat toDisplay = searchImage<cv::Mat>(*frame, state);
     
     display(toDisplay, state);
 }
 
 void process::processFrame(cv::cuda::GpuMat *frame, RunState *state) {
-    static const auto toDisplay = cv::Mat();
-    cv::cuda::GpuMat processed = searchImage<cv::cuda::GpuMat>(frame, state);
+	if(!frame) return;
 
-    processed.download(toDisplay);
-    display(toDisplay, state);
+	cv::Mat img(*frame);
+    cv::Mat processed = searchImage<cv::Mat>(img, state);
+
+    display(processed, state);
 }
