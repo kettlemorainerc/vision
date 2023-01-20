@@ -1,4 +1,6 @@
 #include <opencv2/aruco.hpp>
+#include <opencv2/cudaimgproc.hpp>
+#include <opencv2/cudaobjdetect.hpp>
 #include "./process.hpp"
 
 static void display(cv::InputArray &mat, RunState *state) {
@@ -14,30 +16,33 @@ static void display(cv::InputArray &mat, RunState *state) {
 }
 
 template <class MatType>
-MatType searchImage(MatType &frame, RunState *state) {
-    MatType ret;
-    cv::cvtColor(frame, ret, cv::COLOR_BGRA2GRAY);
-
+void searchAndMarkImage(cv::Mat &gray_scale, RunState *state, cv::Mat &draw_on) {
     std::vector<std::vector<cv::Point2f>> corners;
     std::vector<int> ids;
 
-    state->detector.detectMarkers(ret, corners, ids);
-    cv::aruco::drawDetectedMarkers(ret, corners, ids);
-
-    return ret;
+    state->detector.detectMarkers(gray_scale, corners, ids);
+	static auto green = cv::Scalar(0, 255, 0, 255);
+    cv::aruco::drawDetectedMarkers(draw_on, corners, ids, green);
 }
 
 void process::processFrame(cv::Mat *frame, RunState *state) {
-    cv::Mat toDisplay = searchImage<cv::Mat>(*frame, state);
+	cv::Mat gray;
+	cv::cvtColor(*frame, gray, cv::COLOR_BGRA2GRAY);
+
+    searchAndMarkImage<cv::Mat>(gray, state, *frame);
+
     
-    display(toDisplay, state);
+    display(*frame, state);
 }
 
 void process::processFrame(cv::cuda::GpuMat *frame, RunState *state) {
-	if(!frame) return;
+	cv::cuda::GpuMat gray;
+	cv::cuda::cvtColor(*frame, gray, cv::COLOR_BGR2GRAY);
 
+	cv::Mat processed(gray);
 	cv::Mat img(*frame);
-    cv::Mat processed = searchImage<cv::Mat>(img, state);
 
-    display(processed, state);
+	searchAndMarkImage<cv::Mat>(processed, state, img);
+
+    display(img, state);
 }

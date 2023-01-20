@@ -18,10 +18,12 @@
 
 using namespace cv;
 
+static inline const auto expected_mat_type = CV_8UC3;
+
 template <int width, int height>
 const inline static void to_mat(GstMapInfo *sample, Mat **ret) {
 	Mat *prev = *ret;
-	*ret = new Mat(height, width, CV_8UC4, sample->data);
+	*ret = new Mat(height, width, expected_mat_type, sample->data);
 
 	if(prev) {
 		delete prev;
@@ -31,7 +33,7 @@ const inline static void to_mat(GstMapInfo *sample, Mat **ret) {
 template <std::size_t width, std::size_t height>
 const inline static void to_mat(GstMapInfo *sample, cuda::GpuMat **ret) {
 	cuda::GpuMat *prev = *ret;
-	Mat base(height, width, CV_8UC4, sample->data);
+	Mat base(height, width, expected_mat_type, sample->data);
 	*ret = new cuda::GpuMat(base);
 
 	if(prev) {
@@ -156,23 +158,7 @@ static void main_loop(GstAppSink * appsink, RunState *state) {
 	} while(getWindowProperty(window_name, WindowPropertyFlags::WND_PROP_VISIBLE) != 0);
 }
 
-// static const auto wait_for = 1000 / 60;
-
-int main(int argCount, char* argv[]) {
-	gst_init(&argCount, &argv);
-
-    cppproperties::Properties props = readProperties(argCount, argv);
-	auto pipelineStr = props.GetProperty("pipeline");
-	team2077_print("using pipeline '" << pipelineStr << "'");
-
-	team2077_print("Building run state");
-	RunState state {
-		.props = props,
-		.prev_start=std::chrono::high_resolution_clock::now().time_since_epoch(),
-		.frame_count = 0,
-		.detector = getDetector(),
-	};
-
+int gst_start(std::string pipelineStr, RunState &state) {
 	team2077_print("Parsing pipeline");
 	GError *err = NULL;
 	GstElement *pipeline = gst_parse_launch(pipelineStr.c_str(), &err);
@@ -194,7 +180,7 @@ int main(int argCount, char* argv[]) {
 	team2077_print("Starting");
 	namedWindow(window_name, WINDOW_KEEPRATIO);
 	setWindowProperty(window_name, WindowPropertyFlags::WND_PROP_VISIBLE, 1);
-	// cv:imshow(window_name, cv::Mat(1080, 1920, CV_8UC4));
+	// cv:imshow(window_name, cv::Mat(1080, 1920, expected_mat_type));
 
 	gst_element_set_state(pipeline, GstState::GST_STATE_PLAYING);
 
@@ -208,7 +194,7 @@ int main(int argCount, char* argv[]) {
 	static const int width = 1920;
 	static const int height = 1080;
 
-	if(false && cv::cuda::getCudaEnabledDeviceCount() > 0) {
+	if(cv::cuda::getCudaEnabledDeviceCount() > 0) {
 		team2077_print("Cuda detected, using GpuMats");
 		main_loop<cv::cuda::GpuMat, width, height>(appsink, &state);
 	} else {
@@ -219,4 +205,45 @@ int main(int argCount, char* argv[]) {
 		}
 		main_loop<cv::Mat, width, height>(appsink, &state);
 	}
+}
+
+// static const auto wait_for = 1000 / 60;
+
+template <class MatType, int width, int height>
+int cv_start(std::string pipelineStr, RunState &state) {
+	cv::VideoCapture capture(pipelineStr, CAP_GSTREAMER);
+	capture.open(0);
+
+	MatType *buff = new MatType(height, width, expected_mat_type);
+	MatType *prev_buff = nullptr;
+	while(capture.grab()) {
+		prev_buff = buff;
+		capture.read(*buff);
+
+		if(buff) {
+			process::processFrame(buff, &state);
+		}
+
+		if(prev_buff) {
+			delete prev_buff;
+		}
+	}
+}
+
+int main(int argCount, char* argv[]) {
+	gst_init(&argCount, &argv);
+
+    cppproperties::Properties props = readProperties(argCount, argv);
+	auto pipelineStr = props.GetProperty("pipeline");
+	team2077_print("using pipeline '" << pipelineStr << "'");
+
+	team2077_print("Building run state");
+	RunState state {
+		.props = props,
+		.prev_start=std::chrono::high_resolution_clock::now().time_since_epoch(),
+		.frame_count = 0,
+		.detector = getDetector(),
+	};
+
+	return gst_start(pipelineStr, state);
 }
