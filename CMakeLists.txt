@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(Vision
     VERSION 0.0.1
     DESCRIPTION "Team 2077"
+	LANGUAGES CXX
 )
 
 set(MAP_IMPORTED_CONFIG_MinSizeRel Release)
@@ -32,8 +33,11 @@ include_directories(
 )
 
 add_executable(vision
+	# ${CPP_PATH}/src/sample_to_mat.cpp
+	${CPP_PATH}/src/calibration.cpp
     ${CPP_PATH}/src/main.cpp
     ${CPP_PATH}/src/process.cpp
+    ${CPP_PATH}/src/run.cpp
 
     # cpp-parser
     ${EXTERN_PATH}/cpp-properties/src/Properties.cpp
