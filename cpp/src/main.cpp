@@ -7,72 +7,34 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-#include <gst/gst.h>
-#include <glib.h>
-#include <gst/app/gstappsink.h>
 #include <opencv2/aruco.hpp>
+#include <algorithm>
+#include <vector>
 
 #include "./main.hpp"
 #include "./run.hpp"
 #include "./process.hpp"
+#include "./sample_to_mat.hpp"
+#include "./calibration.hpp"
 
 using namespace cv;
 
-static inline const auto expected_mat_type = CV_8UC3;
-
-template <int width, int height>
-const inline static void to_mat(GstMapInfo *sample, Mat **ret) {
-	Mat *prev = *ret;
-	*ret = new Mat(height, width, expected_mat_type, sample->data);
-
-	if(prev) {
-		delete prev;
-	}
-}
-
-template <std::size_t width, std::size_t height>
-const inline static void to_mat(GstMapInfo *sample, cuda::GpuMat **ret) {
-	cuda::GpuMat *prev = *ret;
-	Mat base(height, width, expected_mat_type, sample->data);
-	*ret = new cuda::GpuMat(base);
-
-	if(prev) {
-		delete prev;
-	}
-}
-
-template <class MatType, int width, int height>
+template <class MatType>
 void process_sample(GstSample *sample, RunState *state) {
 	static GstBuffer *prev_buf = nullptr;
 	static GstMapInfo *prev_info = nullptr;
 	static GstBuffer *buffer = nullptr;
-	static GstMapInfo *info = nullptr;
+	static GstMapInfo *info = new GstMapInfo;
 
 	static MatType *frame = nullptr;
 
-	prev_buf = buffer;
-	buffer = gst_sample_get_buffer(sample);
-	prev_info = info;
-	info = new GstMapInfo;
-	if(gst_buffer_map(buffer, info, GstMapFlags::GST_MAP_READ)) {
-		if(prev_buf) {
-			gst_buffer_unmap(prev_buf, prev_info);
-
-			prev_buf = nullptr;
-			prev_info = nullptr;
-		}
-	} else {
-		team2077_printerr("Failed to map buffer");
-		std::exit(1);
-	}
+	mat_convert::to_mat<MatType>(sample, &frame, buffer, info, prev_buf, prev_info);
 
 	if(getWindowProperty(window_name, WindowPropertyFlags::WND_PROP_VISIBLE) == 0) {
 		team2077_print("Window shutdown, stopping");
 		return;
 	}
 
-
-	to_mat<width, height>(info, &frame);
 	process::processFrame(frame, state);
 }
 
@@ -113,18 +75,21 @@ cppproperties::Properties readProperties(int argCount, char* argv[]) {
 
     // Start at 1 as the first argument is the executable (.../vision.exe)
     std::string propertiesFile;
-    for(int i = 1; i < argCount; i++) {
-        if(argv[i][0] == '-') {
-            std::string str;
-            str.append(argv[i]);
+	int i = 1;
+    for(; i < argCount; i++) {
+		std::string arg;
+		arg.append(argv[i]);
+		if(arg.empty()) continue;
+
+        if(arg[0] == '-') {
             // ignore --whatver=<value> flags
             // skip --whatever <value> styles
-            if(str.find('=', 0) < 0) {
+            if(arg.find('=', 0) < 0) {
                 i++;
             }
         } else {
             // The first non-flag argument should be the properties file
-            propertiesFile.append(argv[i]);
+            propertiesFile = arg;
             break;
         }
     }
@@ -138,16 +103,19 @@ cppproperties::Properties readProperties(int argCount, char* argv[]) {
     return parser.Read(propertiesFile);
 }
 
-template <class MatType, int width, int height>
+template <class MatType>
 static void main_loop(GstAppSink * appsink, RunState *state) {
-	GstSample *sample = nullptr;
+	gst_element_set_state(GST_ELEMENT(appsink), GstState::GST_STATE_PLAYING);
+
+	GstSample *sample  = gst_app_sink_try_pull_sample(appsink, GST_SECOND);
 	GstSample *prev_sample = nullptr;
+
 	do {
 		prev_sample = sample;
 		sample = gst_app_sink_try_pull_sample(appsink, 1);
 
 		if(sample) {
-			process_sample<MatType, width, height>(sample, state);
+			process_sample<MatType>(sample, state);
 			pollKey();
 		}
 
@@ -158,63 +126,40 @@ static void main_loop(GstAppSink * appsink, RunState *state) {
 	} while(getWindowProperty(window_name, WindowPropertyFlags::WND_PROP_VISIBLE) != 0);
 }
 
-int gst_start(std::string pipelineStr, RunState &state) {
-	team2077_print("Parsing pipeline");
-	GError *err = NULL;
-	GstElement *pipeline = gst_parse_launch(pipelineStr.c_str(), &err);
-
-	team2077_print("Searching for appsink");
-	GstAppSink *appsink = GST_APP_SINK(gst_bin_get_by_name(GST_BIN(pipeline), "sink"));
-	if(!appsink) {
-		team2077_printerr("Failed to find appsink!");
-		return 1;
-	}
-
-	gst_app_sink_set_drop(appsink, true);
-	gst_app_sink_set_emit_signals(appsink, false);
-	gst_app_sink_set_max_buffers(appsink, 1);
-
-	// team2077_print("binding sample listener");
-	// g_signal_connect(appsink, "new-sample", G_CALLBACK(new_sample), &state);
+void gst_start(RunState &state) {
+	auto info = run::gst_prepare(state.props);
 
 	team2077_print("Starting");
 	namedWindow(window_name, WINDOW_KEEPRATIO);
 	setWindowProperty(window_name, WindowPropertyFlags::WND_PROP_VISIBLE, 1);
 	// cv:imshow(window_name, cv::Mat(1080, 1920, expected_mat_type));
 
-	gst_element_set_state(pipeline, GstState::GST_STATE_PLAYING);
+	gst_element_set_state(GST_ELEMENT(info.pipeline), GstState::GST_STATE_PLAYING);
 
 	// loop = g_main_loop_new(NULL, false);
 	// g_main_loop_run(loop);
 
-	team2077_print("Trying to pull first sample");
-	GstSample *sample =nullptr;
-	GstSample *prev_sample = nullptr;
-
-	static const int width = 1920;
-	static const int height = 1080;
-
 	if(cv::cuda::getCudaEnabledDeviceCount() > 0) {
 		team2077_print("Cuda detected, using GpuMats");
-		main_loop<cv::cuda::GpuMat, width, height>(appsink, &state);
+		main_loop<cv::cuda::GpuMat>(info.appsink, &state);
 	} else {
 		if(cv::cuda::getCudaEnabledDeviceCount() == -1) {
 			team2077_print("Cuda not enabled, or not compatible, using normal Mat");
 		} else {
 			team2077_print("No Cuda devices detected, using normal Mat");
 		}
-		main_loop<cv::Mat, width, height>(appsink, &state);
+		main_loop<cv::Mat>(info.appsink, &state);
 	}
 }
 
 // static const auto wait_for = 1000 / 60;
 
-template <class MatType, int width, int height>
-int cv_start(std::string pipelineStr, RunState &state) {
+template <class MatType>
+void cv_start(std::string pipelineStr, RunState &state) {
 	cv::VideoCapture capture(pipelineStr, CAP_GSTREAMER);
 	capture.open(0);
 
-	MatType *buff = new MatType(height, width, expected_mat_type);
+	MatType *buff = new MatType();
 	MatType *prev_buff = nullptr;
 	while(capture.grab()) {
 		prev_buff = buff;
@@ -234,16 +179,31 @@ int main(int argCount, char* argv[]) {
 	gst_init(&argCount, &argv);
 
     cppproperties::Properties props = readProperties(argCount, argv);
-	auto pipelineStr = props.GetProperty("pipeline");
-	team2077_print("using pipeline '" << pipelineStr << "'");
 
-	team2077_print("Building run state");
-	RunState state {
-		.props = props,
-		.prev_start=std::chrono::high_resolution_clock::now().time_since_epoch(),
-		.frame_count = 0,
-		.detector = getDetector(),
-	};
+	auto props_names = props.GetPropertyNames();
 
-	return gst_start(pipelineStr, state);
+	std::vector<std::string>::iterator iter;
+	bool calibrate = false;
+	if(std::find(props_names.begin(), props_names.end(), "calibrate") != props_names.end()) {
+		std::string calib = props.GetProperty("calibrate");
+		std::transform(calib.begin(), calib.end(), calib.begin(), [](unsigned char c){return std::tolower(c);});
+
+		calibrate = calib == "true";
+	}
+
+	if(calibrate) {
+		calibration::calibrate(props);
+	} else {
+		team2077_print("Building run state");
+		RunState state {
+			.props = props,
+			.prev_start=std::chrono::high_resolution_clock::now().time_since_epoch(),
+			.frame_count = 0,
+			.detector = getDetector(),
+			.width = 1920,
+			.height = 1080,
+		};
+
+		gst_start(state);
+	}
 }
