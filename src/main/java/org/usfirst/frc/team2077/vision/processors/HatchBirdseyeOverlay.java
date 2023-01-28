@@ -50,6 +50,6 @@ public class HatchBirdseyeOverlay extends BirdseyeVisionOverlay implements Frame
             x += w;
         }
         
-        Imgproc.putText ( overlayMat, "HATCH", new Point(20, 100), Core.FONT_HERSHEY_SIMPLEX, 3, new Scalar(255, 255, 255, 255), 4 );
+//        Imgproc.putText ( overlayMat, "HATCH", new Point(20, 100), Core.FONT_HERSHEY_SIMPLEX, 3, new Scalar(255, 255, 255, 255), 4 );
     }
 }

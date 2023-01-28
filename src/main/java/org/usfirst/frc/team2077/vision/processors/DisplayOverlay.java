@@ -22,7 +22,7 @@ public class DisplayOverlay implements FrameProcessor {
 
     /*           FLAGS               */
     public static final boolean FLAG_DEBUGLINE = false;
-    public static final boolean FLAG_ISPIZZA = false;
+    public static final boolean FLAG_ISPIZZA = true;
     public static final boolean FLAG_SMARTDASHBOARD = false;
     public static final boolean FLAG_BALL_TEXT_LABELS = true;
     public static final boolean FLAG_DEBUG_ANGLE_IN_CENTER = false;//TODO: Make changeable
@@ -197,7 +197,7 @@ public class DisplayOverlay implements FrameProcessor {
     }
 
     public static void drawText(Mat mat, String text, double x, double y) {
-        Imgproc.putText( mat, text, new Point(x, y), Core.FONT_HERSHEY_SIMPLEX, 1, new Scalar(0,0,0,255), 2 );
+//        Imgproc.putText( mat, text, new Point(x, y), Core.FONT_HERSHEY_SIMPLEX, 1, new Scalar(0,0,0,255), 2 );
 //        Imgproc.putText( mat, text, new Point(x, y), Core.FONT_HERSHEY_SIMPLEX, 1, new Scalar(255,255,255,255), 2 );
     }
 

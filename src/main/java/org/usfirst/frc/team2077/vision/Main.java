@@ -212,7 +212,7 @@ public class Main {
                         processFrame();
                     }
                     catch (Exception ex) {
-                        ex.printStackTrace();
+//                        ex.printStackTrace();
                     }
                 }
             }, 75, 75); // TODO: make frame rate or duty cycle configurable

@@ -17,10 +17,12 @@ public class NTMain extends org.usfirst.frc.team2077.vision.Main {
         init( args );
 
         networkTable_ = NetworkTableInstance.getDefault();
+        networkTable_.startServer();
         networkTable_.startClient(properties_.getProperty("network-tables-server", "127.0.0.1"));
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 networkTable_.stopClient();
+                networkTable_.stopServer();
             }
         });
         

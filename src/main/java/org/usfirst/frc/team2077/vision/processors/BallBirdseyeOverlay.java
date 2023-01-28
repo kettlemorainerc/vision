@@ -15,8 +15,6 @@ public class BallBirdseyeOverlay extends BirdseyeVisionOverlay implements FrameP
     
     @Override
     public void processFrame( Mat frameMat, Mat overlayMat ) {
-        super.processFrame( frameMat, overlayMat );
 
-        Imgproc.putText ( overlayMat, "BALL", new Point(20, 100), Core.FONT_HERSHEY_SIMPLEX, 3, new Scalar(255, 255, 255, 255), 4 );
     }
 }

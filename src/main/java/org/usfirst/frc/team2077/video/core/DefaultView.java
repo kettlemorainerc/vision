@@ -283,7 +283,7 @@ public class DefaultView implements RenderedView {
                     lock.release();
                 }
             } catch (Exception ex) {
-                Main.logger_.log(Level.WARNING, "Problem locking frame file channel for " + name_ + " on Thread " + Thread.currentThread().getName() + ".", ex);
+//                Main.logger_.log(Level.WARNING, "Problem locking frame file channel for " + name_ + " on Thread " + Thread.currentThread().getName() + ".", ex);
             }
         }
 

@@ -1,5 +1,7 @@
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
+import java.nio.file.Paths
+
 plugins {
     id 'java'
     id 'application'
@@ -11,7 +13,7 @@ plugins {
 //    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest("org.usfirst.frc.team2077.video.Main")
 //}
 
-def targetConfiguration = "aimingFEThree2020";
+def targetConfiguration = "camera";
 targetCompatibility = (JavaVersion.VERSION_11)
 sourceCompatibility = (JavaVersion.VERSION_11)
 
@@ -20,6 +22,10 @@ task copyVideoData(type: Copy) {
         include "*"
     }
     into "$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA"
+    from("pictures") {
+        include "*"
+    }
+    into "$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}pictures"
 }
 
 task saveVideoData(type: Copy) {
@@ -27,6 +33,10 @@ task saveVideoData(type: Copy) {
         include '*'
     }
     into "VIDEO_DATA"
+    from("$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}pictures") {
+        include "*"
+    }
+    into "pictures"
 }
 
 tasks.withType(JavaExec) {
@@ -34,7 +44,13 @@ tasks.withType(JavaExec) {
     finalizedBy(tasks.saveVideoData)
     workingDir "$buildDir${File.separator}tmp${File.separator}jniExtractDir"
     argsString(targetConfiguration)
-    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
+    
+    def components = [
+            System.getProperty("java.library.path"),
+            "$buildDir${File.separator}tmp${File.separator}jniExtractDir",
+            Paths.get(projectDir.toString(), "opencv", "standard", "build", "lib", "Debug").toString()
+    ]
+    systemProperty 'java.library.path', components.join(File.pathSeparator)
 }
 
 repositories {
@@ -49,7 +65,6 @@ repositories {
 run {
     dependsOn tasks.extractTestJNI
     dependsOn tasks.build
-    systemProperty 'java.library.path', "${System.getProperty("java.library.path")}${File.pathSeparator}$buildDir${File.separator}tmp${File.separator}jniExtractDir"
 
     classpath = sourceSets.main.runtimeClasspath
     main = "org.usfirst.frc.team2077.video.Main"
@@ -67,7 +82,7 @@ dependencies {
     implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
     implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-core', version: '1.4.0'
     implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-swing', version: '0.9.0'
-    implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
+//    implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
     implementation files("april-tag/april-tags-2077.jar")
@@ -77,6 +92,8 @@ dependencies {
         implementation files("network-tables${File.separator}ntcore-jni-4.0.0-all.jar")
         implementation files("network-tables${File.separator}wpiutil-java-3.0.0.jar")
     }
+    
+    implementation files("opencv/standard/build/bin/opencv-460.jar")
 }
 
 task startNetwork(type: JavaExec) {
