@@ -2,8 +2,9 @@
 
 #include <gst/gst.h>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/core/cuda.hpp>
 
-static inline const auto expected_mat_type = CV_8UC3;
+static inline const auto expected_mat_type = CV_8UC4;
 
 namespace mat_convert {
 
@@ -30,7 +31,7 @@ namespace mat_convert {
 	}
 
 	template <class MatType>
-	void mat_convert::to_mat(GstSample *sample, MatType **target, GstBuffer *buffer, GstMapInfo *info, GstBuffer *prev_buf, GstMapInfo *prev_info) {
+	void to_mat(GstSample *sample, MatType **target, GstBuffer *buffer, GstMapInfo *info, GstBuffer *prev_buf, GstMapInfo *prev_info) {
 		prev_buf = buffer;
 		buffer = gst_sample_get_buffer(sample);
 

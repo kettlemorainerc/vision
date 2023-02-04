@@ -36,6 +36,7 @@ void process_sample(GstSample *sample, RunState *state) {
 	}
 
 	process::processFrame(frame, state);
+	team2077_print("processed");
 }
 
 static const cv::Ptr<cv::aruco::DetectorParameters> getParams() {
@@ -104,25 +105,52 @@ cppproperties::Properties readProperties(int argCount, char* argv[]) {
 }
 
 template <class MatType>
+static GstFlowReturn new_sample(GstElement *appsink, RunState *state) {
+	auto sample = gst_app_sink_pull_sample(GST_APP_SINK(appsink));
+	process_sample<MatType>(sample, state);
+	gst_sample_unref(sample);
+
+	return GstFlowReturn::GST_FLOW_OK;
+}
+
+template <class MatType>
 static void main_loop(GstAppSink * appsink, RunState *state) {
 	gst_element_set_state(GST_ELEMENT(appsink), GstState::GST_STATE_PLAYING);
+
+	// auto loop = g_main_loop_new(NULL, false);
+
+	// gst_app_sink_set_emit_signals(GST_APP_SINK(appsink), true);
+	// g_signal_connect(GST_APP_SINK(appsink), "new-sample", G_CALLBACK(new_sample<MatType>), state);
+
+	// g_main_loop_run(loop);
 
 	GstSample *sample  = gst_app_sink_try_pull_sample(appsink, GST_SECOND);
 	GstSample *prev_sample = nullptr;
 
+	auto checked = false;
 	do {
 		prev_sample = sample;
-		sample = gst_app_sink_try_pull_sample(appsink, 1);
+		sample = gst_app_sink_pull_sample(appsink);
 
 		if(sample) {
+			team2077_print("received sample");
+			if(!checked) {
+				auto caps = gst_sample_get_caps(sample);
+				team2077_print(gst_caps_to_string(caps));
+				gst_caps_unref(caps);
+				checked = true;
+			}
+
 			process_sample<MatType>(sample, state);
 			pollKey();
+
+			if(prev_sample) {
+				gst_sample_unref(prev_sample);
+				team2077_print("unreffed");
+				prev_sample = nullptr;
+			}
 		}
 
-		if(prev_sample) {
-			gst_sample_unref(prev_sample);
-			prev_sample = nullptr;
-		}
 	} while(getWindowProperty(window_name, WindowPropertyFlags::WND_PROP_VISIBLE) != 0);
 }
 
@@ -130,14 +158,11 @@ void gst_start(RunState &state) {
 	auto info = run::gst_prepare(state.props);
 
 	team2077_print("Starting");
-	namedWindow(window_name, WINDOW_KEEPRATIO);
+	namedWindow(window_name, WINDOW_KEEPRATIO | WINDOW_NORMAL);
 	setWindowProperty(window_name, WindowPropertyFlags::WND_PROP_VISIBLE, 1);
 	// cv:imshow(window_name, cv::Mat(1080, 1920, expected_mat_type));
 
 	gst_element_set_state(GST_ELEMENT(info.pipeline), GstState::GST_STATE_PLAYING);
-
-	// loop = g_main_loop_new(NULL, false);
-	// g_main_loop_run(loop);
 
 	if(cv::cuda::getCudaEnabledDeviceCount() > 0) {
 		team2077_print("Cuda detected, using GpuMats");
@@ -167,6 +192,7 @@ void cv_start(std::string pipelineStr, RunState &state) {
 
 		if(buff) {
 			process::processFrame(buff, &state);
+			pollKey();
 		}
 
 		if(prev_buff) {
