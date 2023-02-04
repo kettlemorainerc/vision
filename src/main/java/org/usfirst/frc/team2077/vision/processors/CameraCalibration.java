@@ -28,12 +28,13 @@ public class CameraCalibration{
     private static Mat obj;
     public static void printMat(Mat mat){
         System.out.println("[");
-        double[][] arr = new double[mat.cols()][3];
+
+        double[][] arr = new double[mat.cols()][mat.channels()];
         for(int i = 0; i < mat.rows(); i++){
 
             for(int n = 0; n < mat.cols(); n++){
+                mat.convertTo(mat,6);
                 mat.get(i,n,arr[n]);
-
             }
             System.out.printf("%s;%n",Arrays.deepToString(arr));
 
@@ -50,6 +51,9 @@ public class CameraCalibration{
 
         //I now know what this does but why is it like this?
         Mat obj = new Mat(9 * 6, 1, CvType.CV_32FC3);
+
+
+
         byte col = 0;
         byte row = 0;
         for (int matRow = 0; matRow < obj.rows(); matRow++) {
@@ -106,17 +110,30 @@ public class CameraCalibration{
         List<Mat> rvecs = new LinkedList<>();
         List<Mat> tvecs = new LinkedList<>();
         Mat imageMatrix = new Mat(3,3,CvType.CV_32F);
+
         Mat distance = new Mat();
         Calib3d.calibrateCamera(objectPoints, imagePoints, imageSize, imageMatrix, distance, rvecs, tvecs);
+
+        System.out.println("objectPoints: ");
+        for(int i = 0; i < objectPoints.size(); i++){
+            printMat(objectPoints.get(i));
+        }
+        System.out.println("imagePoints: ");
+        for(int i = 0; i < imagePoints.size(); i++){
+            printMat(imagePoints.get(i));
+        }
         System.out.println("Camera Matrix: " );
         printMat(imageMatrix);
         System.out.println("Distance: ");
         printMat(distance);
-
-
-
-
-
+        System.out.println("rvecs: ");
+        for(int i = 0; i < rvecs.size(); i++){
+            printMat(rvecs.get(i));
+        }
+        System.out.print("tvecs: ");
+        for(int i = 0; i < tvecs.size(); i++){
+            printMat(tvecs.get(i));
+        }
 
 //    @Override
 //    public void processFrame(Mat frameMat, Mat overlayMat) {
