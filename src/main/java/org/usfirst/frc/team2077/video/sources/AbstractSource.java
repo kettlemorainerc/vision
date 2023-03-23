@@ -70,7 +70,7 @@ import org.usfirst.frc.team2077.vision.processors.DisplayOverlay;
  */
 public abstract class AbstractSource implements VideoSource {
 
-    protected static final java.util.Timer timer_ = new Timer();
+    protected static final java.util.Timer timer_ = new Timer(true);
 
     protected final String name_;
 

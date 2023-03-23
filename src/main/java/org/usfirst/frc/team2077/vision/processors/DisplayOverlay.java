@@ -1,21 +1,21 @@
 package org.usfirst.frc.team2077.vision.processors;
 
-import java.util.Map;
-import java.util.TreeMap;
-
-import com.fasterxml.jackson.databind.cfg.ContextAttributes;
-import edu.wpi.first.networktables.EntryListenerFlags;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
-
-import org.ejml.data.BMatrixRMaj;
-import org.opencv.core.*;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-import org.usfirst.frc.team2077.video.Main;
 import org.usfirst.frc.team2077.vision.Main.FrameProcessor;
 import org.usfirst.frc.team2077.vision.NTMain;
 
-import edu.wpi.first.networktables.NetworkTableEntry;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class DisplayOverlay implements FrameProcessor {
 //    OVERLAYS
@@ -64,10 +64,19 @@ public class DisplayOverlay implements FrameProcessor {
 //    private final static String BALL_DISTANCE_KEY = "ball_distance";
 
     static {
-        secondsNTE = NetworkTableInstance.getDefault().getTable("robot").getEntry("time");
-        secondsNTE.addListener(entry -> {
-            gameSeconds = (int) secondsNTE.getDouble(0);
-        }, EntryListenerFlags.kUpdate | EntryListenerFlags.kNew | EntryListenerFlags.kImmediate | EntryListenerFlags.kLocal);
+        NetworkTableInstance def = NetworkTableInstance.getDefault();
+        NetworkTable robot = def.getTable("robot");
+        secondsNTE = robot.getEntry("time");
+        robot.addListener(
+                "time",
+                EnumSet.of(
+                        NetworkTableEvent.Kind.kValueAll,
+                        NetworkTableEvent.Kind.kImmediate
+                ),
+                (table, key, event) -> {
+                    gameSeconds = (int) event.valueData.value.getInteger();
+                }
+        );
     }
 
     @Override

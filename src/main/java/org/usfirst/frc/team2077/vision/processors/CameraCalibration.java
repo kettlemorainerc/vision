@@ -16,8 +16,6 @@ import java.util.List;
 public class CameraCalibration{
 
 
-
-
     private static List<Mat> objectPoints = new LinkedList<>();
     private static List<Mat> imagePoints = new LinkedList<>();
 
@@ -25,7 +23,6 @@ public class CameraCalibration{
 
     private static Size imageSize = new Size(9, 6);
 
-    private static Mat obj;
     public static void printMat(Mat mat){
         System.out.println("[");
 
@@ -91,7 +88,6 @@ public class CameraCalibration{
                 return;
             }
 
-
             objectPoints.add(obj);
             Imgproc.cornerSubPix(grayscaleMat, corners, new Size(11, 11), new Size(-1, -1), criteria);
             imagePoints.add(corners);
@@ -105,7 +101,6 @@ public class CameraCalibration{
 
         }
         HighGui.destroyAllWindows();
-        //System.out.println("Running camera calibration");
 
         List<Mat> rvecs = new LinkedList<>();
         List<Mat> tvecs = new LinkedList<>();
@@ -115,28 +110,24 @@ public class CameraCalibration{
         Calib3d.calibrateCamera(objectPoints, imagePoints, imageSize, imageMatrix, distance, rvecs, tvecs);
 
         System.out.println("objectPoints: ");
-        for(int i = 0; i < objectPoints.size(); i++){
-            printMat(objectPoints.get(i));
+        for (Mat objectPoint : objectPoints) {
+            printMat(objectPoint);
         }
         System.out.println("imagePoints: ");
-        for(int i = 0; i < imagePoints.size(); i++){
-            printMat(imagePoints.get(i));
+        for (Mat imagePoint : imagePoints) {
+            printMat(imagePoint);
         }
         System.out.println("Camera Matrix: " );
         printMat(imageMatrix);
         System.out.println("Distance: ");
         printMat(distance);
         System.out.println("rvecs: ");
-        for(int i = 0; i < rvecs.size(); i++){
-            printMat(rvecs.get(i));
+        for (Mat rvec : rvecs) {
+            printMat(rvec);
         }
         System.out.print("tvecs: ");
-        for(int i = 0; i < tvecs.size(); i++){
-            printMat(tvecs.get(i));
+        for (Mat tvec : tvecs) {
+            printMat(tvec);
         }
 
-//    @Override
-//    public void processFrame(Mat frameMat, Mat overlayMat) {
-//        calibrateCamera(frameMat, overlayMat);
-//    }
 }}

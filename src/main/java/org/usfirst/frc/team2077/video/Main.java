@@ -135,7 +135,7 @@ public class Main {
         startSources();
 
         // frame rate monitor
-        new Timer().schedule(new TimerTask() {
+        new Timer(true).schedule(new TimerTask() {
             @Override
             public void run() {
                 logger_.log(Level.INFO, "FPS:" + frames_.getAndSet(0) / 10);

@@ -1,31 +1,44 @@
-import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-
 import java.nio.file.Paths
 
 plugins {
     id 'java'
     id 'application'
-    id "edu.wpi.first.GradleRIO" version "2020.3.2"
+    id "edu.wpi.first.GradleRIO" version "2023.3.1"
 }
 
-//jar {
-//    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-//    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest("org.usfirst.frc.team2077.video.Main")
-//}
-
 def targetConfiguration = "camera";
+def workingDirectory = file("$buildDir/run/")
 targetCompatibility = (JavaVersion.VERSION_11)
 sourceCompatibility = (JavaVersion.VERSION_11)
+
+dependencies {
+    implementation wpi.java.deps.wpilib()
+    implementation wpi.java.vendor.java()
+
+    nativeDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.desktop)
+    nativeDebug wpi.java.vendor.jniDebug(wpi.platforms.desktop)
+
+    nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop)
+    nativeRelease wpi.java.vendor.jniRelease(wpi.platforms.desktop)
+
+    implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
+    implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-core', version: '1.4.0'
+    implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-swing', version: '0.9.0'
+    implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
+    implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
+}
 
 task copyVideoData(type: Copy) {
     from("VIDEO_DATA") {
         include "*"
     }
-    into "$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA"
+    into "$workingDirectory${File.separator}VIDEO_DATA"
     from("pictures") {
         include "*"
     }
-    into "$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}pictures"
+    into "$workingDirectory${File.separator}pictures"
+
+    duplicatesStrategy(DuplicatesStrategy.INCLUDE)
 }
 
 task saveVideoData(type: Copy) {
@@ -42,7 +55,7 @@ task saveVideoData(type: Copy) {
 tasks.withType(JavaExec) {
     dependsOn tasks.copyVideoData
     finalizedBy(tasks.saveVideoData)
-    workingDir "$buildDir${File.separator}tmp${File.separator}jniExtractDir"
+    workingDir workingDirectory
     argsString(targetConfiguration)
     
     def components = [
@@ -54,46 +67,43 @@ tasks.withType(JavaExec) {
 }
 
 repositories {
-    mavenCentral()
-    jcenter()
-    mavenLocal()
     maven {
-        url 'http://maven.icm.edu.pl/artifactory/repo/'
+        url 'file:///C:/Users/Public/wpilib/2023/maven'
+    }
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url 'https://maven.icm.edu.pl/artifactory/repo/'
+    }
+}
+
+def files = [
+        "C:\\Users\\Public\\wpilib\\2023\\maven\\edu\\wpi\\first\\ntcore\\ntcore-cpp\\2023.3.2\\ntcore-cpp-2023.3.2-windowsx86-64.zip",
+        "C:\\Users\\Public\\wpilib\\2023\\maven\\edu\\wpi\\first\\wpinet\\wpinet-cpp\\2023.3.2\\wpinet-cpp-2023.3.2-windowsx86-64.zip",
+        "C:\\Users\\Public\\wpilib\\2023\\maven\\edu\\wpi\\first\\wpiutil\\wpiutil-cpp\\2023.3.2\\wpiutil-cpp-2023.3.2-windowsx86-64.zip",
+]
+
+task extractDeps {
+    doLast {
+        copy {
+            files.each {
+                from zipTree(it).asCollection()
+            }
+
+            include "**/*.lib"
+            include "**/*.dll"
+
+            into workingDirectory
+        }
     }
 }
 
 run {
-    dependsOn tasks.extractTestJNI
+    dependsOn tasks.extractDeps
     dependsOn tasks.build
 
     classpath = sourceSets.main.runtimeClasspath
     main = "org.usfirst.frc.team2077.video.Main"
-}
-
-dependencies {
-    implementation wpi.deps.wpilib()
-    nativeZip wpi.deps.wpilibJni(wpi.platforms.roborio)
-    nativeDesktopZip wpi.deps.wpilibJni(wpi.platforms.desktop)
-
-    implementation wpi.deps.vendor.java()
-    nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
-    nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
-
-    implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
-    implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-core', version: '1.4.0'
-    implementation group: 'org.freedesktop.gstreamer', name: 'gst1-java-swing', version: '0.9.0'
-//    implementation group: 'org.opencv', name: 'openCVLibrary', version: '3.4.0'
-    implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
-    implementation group: 'net.java.dev.jna', name: 'jna', version: '5.6.0'
-    implementation files("april-tag/april-tags-2077.jar")
-
-    if(DefaultNativePlatform.currentOperatingSystem.linux) {
-        implementation files("network-tables${File.separator}ntcore-java-4.0.0.jar")
-        implementation files("network-tables${File.separator}ntcore-jni-4.0.0-all.jar")
-        implementation files("network-tables${File.separator}wpiutil-java-3.0.0.jar")
-    }
-    
-    implementation files("opencv/standard/build/bin/opencv-460.jar")
 }
 
 task startNetwork(type: JavaExec) {

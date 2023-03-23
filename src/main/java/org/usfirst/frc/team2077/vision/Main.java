@@ -38,9 +38,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
+import org.opencv.core.*;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.osgi.*;
 import org.usfirst.frc.team2077.vvcommon.MappedFrameInfo;
 import org.usfirst.frc.team2077.vvcommon.Utilities;
@@ -197,7 +196,7 @@ public class Main {
             overlayFileChannel_ = new RandomAccessFile(new File(videoInfo_.overlayFile_), "rw").getChannel();
             overlayMappedBuffer_ = overlayFileChannel_.map(MapMode.READ_WRITE, 0, resolution_.width * resolution_.height * 4).order(byteOrder);
 
-            overlayMat_ = new Mat(resolution_.height,resolution_.width, CvType.CV_8UC4);
+            overlayMat_ = new Mat(resolution_.height, resolution_.width, CvType.CV_8UC4);
             overlayByteBuffer_ = ByteBuffer.allocate(resolution_.width * resolution_.height * 4).order(byteOrder);
             overlayBytes_ = overlayByteBuffer_.array(); // used to transfer data back and forth to openCV
             overlayImage_ = new BufferedImage(resolution_.width, resolution_.height, BufferedImage.TYPE_INT_ARGB);

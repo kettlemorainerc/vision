@@ -1,13 +1,13 @@
 package org.usfirst.frc.team2077.video;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Consumer;
 
+import edu.wpi.first.networktables.NetworkTableEvent;
 import org.usfirst.frc.team2077.video.interfaces.VideoSource;
 import org.usfirst.frc.team2077.video.interfaces.VideoView;
 
-import edu.wpi.first.networktables.EntryNotification;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -35,33 +35,35 @@ public class NTMain extends Main {
         init(args);
         
         networkTable_ = NetworkTableInstance.getDefault();
-        networkTable_.startClient(properties_.getProperty("network-tables-server", "127.0.0.1"));
+        networkTable_.startClient4(properties_.getProperty("network-tables-server", "127.0.0.1"));
+//        networkTable_.startClient(properties_.getProperty("network-tables-server", "127.0.0.1"));
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 networkTable_.stopClient();
             }
         });
         NetworkTableEntry videoView = networkTable_.getEntry("VideoView");
-        videoView.addListener(new Consumer<EntryNotification>() {
-            @Override
-            public void accept(EntryNotification en) {
-                VideoView view = views_.get(en.getEntry().getString(null));
-                if (view != null) {
-                    videoFrame_.setContentPane( view.getJComponent() );
-                    videoFrame_.revalidate();
-                    videoFrame_.repaint();
-                    Set<VideoView> views = new HashSet<>();
-                    for ( VideoView v : view.getViews() ) {
-                        views.add( v );
-                    }
-                    views.addAll( mappedViews_ );
-                    for ( VideoSource source : sources_.values() ) {
-                        source.activateViews( views );
+        networkTable_.addListener(
+                videoView,
+                EnumSet.allOf(NetworkTableEvent.Kind.class),
+                (event) -> {
+                    VideoView view = views_.get(event.valueData.value.getString());
+                    if (view != null) {
+                        videoFrame_.setContentPane( view.getJComponent() );
+                        videoFrame_.revalidate();
+                        videoFrame_.repaint();
+                        Set<VideoView> views = new HashSet<>();
+                        for ( VideoView v : view.getViews() ) {
+                            views.add( v );
+                        }
+                        views.addAll( mappedViews_ );
+                        for ( VideoSource source : sources_.values() ) {
+                            source.activateViews( views );
+                        }
                     }
                 }
-            }
-        }, -1);
-        
+        );
+
         String viewName = videoView.getString(views_.keySet().iterator().next());
         VideoView view = views_.get(viewName);
         if (view != null) {

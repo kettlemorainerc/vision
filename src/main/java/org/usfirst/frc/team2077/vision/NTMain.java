@@ -1,12 +1,10 @@
 package org.usfirst.frc.team2077.vision;
 
-import java.io.*;
-import java.util.*;
-import java.util.function.Consumer;
-
-import edu.wpi.first.networktables.EntryNotification;
 import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
+
+import java.util.EnumSet;
 
 
 public class NTMain extends org.usfirst.frc.team2077.vision.Main {
@@ -18,7 +16,7 @@ public class NTMain extends org.usfirst.frc.team2077.vision.Main {
 
         networkTable_ = NetworkTableInstance.getDefault();
         networkTable_.startServer();
-        networkTable_.startClient(properties_.getProperty("network-tables-server", "127.0.0.1"));
+        networkTable_.startClient4(properties_.getProperty("network-tables-server", "127.0.0.1"));
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 networkTable_.stopClient();
@@ -27,19 +25,20 @@ public class NTMain extends org.usfirst.frc.team2077.vision.Main {
         });
         
         NetworkTableEntry visionView = networkTable_.getEntry("VisionView");
-        visionView.addListener(new Consumer<EntryNotification>() {
-            @Override
-            public void accept(EntryNotification en) {
-                VisionView view = views_.get(en.getEntry().getString(null));
-                visionFrame_.setContentPane(view.getJComponent());
-                if (!visionFrame_.isVisible()) {
-                    visionFrame_.pack();
-                    visionFrame_.setVisible(true);
+        networkTable_.addListener(
+                visionView,
+                EnumSet.allOf(NetworkTableEvent.Kind.class),
+                en -> {
+                    VisionView view = views_.get(en.valueData.value.getString());
+                    visionFrame_.setContentPane(view.getJComponent());
+                    if (!visionFrame_.isVisible()) {
+                        visionFrame_.pack();
+                        visionFrame_.setVisible(true);
+                    }
+                    visionFrame_.revalidate();
+                    visionFrame_.repaint();
                 }
-                visionFrame_.revalidate();
-                visionFrame_.repaint();
-            }
-        }, -1);
+        );
         
         String viewName = visionView.getString(null);
         VisionView view = views_.get(viewName);
