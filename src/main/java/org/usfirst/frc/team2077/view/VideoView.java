@@ -28,6 +28,7 @@ public abstract class VideoView {
 
     public abstract void processFrame(IntBuffer frameBuffer);
 
+    /** Maps pixels from the source buffer mutably to the view array. */
     protected final void mapPixels(IntBuffer source, int[] view) {
         for(int idx = 0 ; idx < view.length ; idx += 2) {
             view[pixelMapping[idx]] = source.get(pixelMapping[idx + 1]);

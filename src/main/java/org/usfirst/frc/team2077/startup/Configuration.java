@@ -1,24 +1,20 @@
 package org.usfirst.frc.team2077.startup;
 
-import org.usfirst.frc.team2077.video.interfaces.*;
+import org.usfirst.frc.team2077.source.VideoSource;
+import org.usfirst.frc.team2077.view.VideoView;
 
-import java.util.List;
-
-public abstract class Configuration {
+public abstract class Configuration implements AutoCloseable {
     protected final VideoView view;
     protected final VideoSource source;
 
     protected Configuration(VideoSource source, VideoView view) {
         this.source = source;
         this.view = view;
+
+        view.forSource(source);
     }
 
-    public void start() {
-        source.start();
-        source.activateViews(List.of(view));
-    }
-
-    public void stop() {
-        source.stop();
+    @Override public void close() throws Exception {
+        source.close();
     }
 }
