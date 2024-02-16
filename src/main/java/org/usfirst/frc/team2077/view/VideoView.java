@@ -1,8 +1,8 @@
 package org.usfirst.frc.team2077.view;
 
 import org.slf4j.*;
+import org.usfirst.frc.team2077.projection.*;
 import org.usfirst.frc.team2077.source.VideoSource;
-import org.usfirst.frc.team2077.video.interfaces.*;
 
 import java.awt.*;
 import java.nio.IntBuffer;
@@ -24,6 +24,10 @@ public abstract class VideoView {
         this.resolution = resolution;
         this.renderProjection = renderProjection;
         this.sourceProjection = sourceProjection;
+    }
+
+    public Dimension getResolution() {
+        return resolution;
     }
 
     public abstract void processFrame(IntBuffer frameBuffer);

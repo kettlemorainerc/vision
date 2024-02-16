@@ -1,7 +1,7 @@
 package org.usfirst.frc.team2077.view;
 
 import org.opencv.core.*;
-import org.usfirst.frc.team2077.video.interfaces.*;
+import org.usfirst.frc.team2077.projection.*;
 import org.usfirst.frc.team2077.view.processors.FrameProcessor;
 
 import javax.swing.*;
@@ -10,7 +10,6 @@ import java.awt.Point;
 import java.awt.image.*;
 import java.lang.reflect.Field;
 import java.nio.*;
-import java.util.concurrent.*;
 
 public class OpenCvView extends VideoView {
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(OpenCvView.class);
@@ -24,7 +23,7 @@ public class OpenCvView extends VideoView {
     private final Thread displayThread;
     private final JFrame frame;
 
-    protected OpenCvView(
+    public OpenCvView(
             Dimension resolution,
             RenderingProjection renderProjection,
             SourceProjection sourceProjection,

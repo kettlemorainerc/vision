@@ -106,7 +106,7 @@ run {
     dependsOn tasks.build
 
     classpath = sourceSets.main.runtimeClasspath
-    main = "org.usfirst.frc.team2077.video.Main"
+    main = "org.usfirst.frc.team2077.startup.Startup"
 }
 
 task startNetwork(type: JavaExec) {
