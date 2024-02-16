@@ -5,7 +5,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -152,18 +151,7 @@ public class CompositeView implements VideoView {
         }
         return jComponent_;
     }
-    
-    @Override
-    public Collection<VideoView> getViews() {
-        if (views_.isEmpty()) {
-            for (String viewName : viewBounds_.keySet()) {
-                VideoView view = Main.getView(viewName);
-                views_.addAll(view.getViews());
-            }
-        }
-        return views_;
-    }
-    
+
     @Override
     public boolean isMapped() {
         return false;

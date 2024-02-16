@@ -18,7 +18,6 @@ import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.FileLock;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -32,7 +31,6 @@ import javax.swing.JComponent;
 import org.usfirst.frc.team2077.video.Main;
 import org.usfirst.frc.team2077.video.interfaces.RenderedView;
 import org.usfirst.frc.team2077.video.interfaces.Rendering;
-import org.usfirst.frc.team2077.video.interfaces.VideoView;
 import org.usfirst.frc.team2077.vvcommon.MappedFrameInfo;
 
 /**
@@ -239,11 +237,6 @@ public class DefaultView implements RenderedView {
     @Override
     public BufferedImage getLayoutMask() {
         return layoutMask_;
-    }
-
-    @Override
-    public Collection<VideoView> getViews() {
-        return Arrays.asList( this );
     }
 
     @Override

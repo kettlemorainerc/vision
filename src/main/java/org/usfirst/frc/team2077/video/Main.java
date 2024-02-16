@@ -82,13 +82,9 @@ public class Main {
                     videoFrame_.setContentPane(view.getJComponent());
                     videoFrame_.revalidate();
                     videoFrame_.repaint();
-                    Set<VideoView> views = new HashSet<>();
-                    for (VideoView view : view.getViews()) {
-                        views.add(view);
-                    }
-                    views.addAll(mappedViews_);
+
                     for (VideoSource source : sources_.values()) {
-                        source.activateViews(views);
+                        source.activateViews(mappedViews_);
                     }
                 }
             });

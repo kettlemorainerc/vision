@@ -40,11 +40,6 @@ public interface VideoView {
     JComponent getJComponent();
 
     /**
-     * @return All displayable views including any nested sub-views.
-     */
-    Collection<VideoView> getViews();
-
-    /**
      * @return True if the view provides memory-mapped video output frames.
      */
     boolean isMapped();

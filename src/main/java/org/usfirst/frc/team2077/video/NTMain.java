@@ -52,13 +52,9 @@ public class NTMain extends Main {
                         videoFrame_.setContentPane( view.getJComponent() );
                         videoFrame_.revalidate();
                         videoFrame_.repaint();
-                        Set<VideoView> views = new HashSet<>();
-                        for ( VideoView v : view.getViews() ) {
-                            views.add( v );
-                        }
-                        views.addAll( mappedViews_ );
+
                         for ( VideoSource source : sources_.values() ) {
-                            source.activateViews( views );
+                            source.activateViews( mappedViews_ );
                         }
                     }
                 }
@@ -70,13 +66,9 @@ public class NTMain extends Main {
             videoFrame_.setContentPane(view.getJComponent());
             videoFrame_.revalidate();
             videoFrame_.repaint();
-            Set<VideoView> views = new HashSet<>();
-            for (VideoView v : view.getViews()) {
-                views.add(v);
-            }
-            views.addAll(mappedViews_);
+
             for (VideoSource source : sources_.values()) {
-                source.activateViews(views);
+                source.activateViews(mappedViews_);
             }
         }
         
