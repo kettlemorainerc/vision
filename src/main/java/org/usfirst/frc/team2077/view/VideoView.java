@@ -37,7 +37,8 @@ public abstract class VideoView {
         if(pixelMapping.length == 0) {
             return;
         }
-        for(int idx = 0 ; idx < view.limit() ; idx += 2) {
+
+        for(int idx = 0 ; idx < pixelMapping.length ; idx += 2) {
             view.put(pixelMapping[idx], source.get(pixelMapping[idx + 1]));
         }
     }
@@ -145,9 +146,9 @@ public abstract class VideoView {
           int[] values
     ) {
         minMax[0][0] = Math.min(minMax[0][0], values[0]);
-        minMax[0][1] = Math.min(minMax[0][1], values[0]);
+        minMax[0][1] = Math.max(minMax[0][1], values[0]);
         minMax[1][0] = Math.min(minMax[1][0], values[1]);
-        minMax[1][1] = Math.min(minMax[1][1], values[1]);
+        minMax[1][1] = Math.max(minMax[1][1], values[1]);
     }
 
     private static void minMax(
@@ -155,9 +156,9 @@ public abstract class VideoView {
           double[] values
     ) {
         minMax[0][0] = Math.min(minMax[0][0], values[0]);
-        minMax[0][1] = Math.min(minMax[0][1], values[0]);
+        minMax[0][1] = Math.max(minMax[0][1], values[0]);
         minMax[1][0] = Math.min(minMax[1][0], values[1]);
-        minMax[1][1] = Math.min(minMax[1][1], values[1]);
+        minMax[1][1] = Math.max(minMax[1][1], values[1]);
     }
 
     private static int[][] intMinMax() {

@@ -7,7 +7,7 @@ plugins {
 }
 
 def targetConfiguration = "camera";
-def workingDirectory = file("$buildDir/run/")
+def workingDirectory = file("${project.layout.buildDirectory.asFile.get()}/run/")
 targetCompatibility = (JavaVersion.VERSION_17)
 sourceCompatibility = (JavaVersion.VERSION_17)
 
@@ -44,11 +44,11 @@ task copyVideoData(type: Copy) {
 }
 
 task saveVideoData(type: Copy) {
-    from("$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA") {
+    from("${project.layout.buildDirectory.asFile.get()}${File.separator}tmp${File.separator}jniExtractDir${File.separator}VIDEO_DATA") {
         include '*'
     }
     into "VIDEO_DATA"
-    from("$buildDir${File.separator}tmp${File.separator}jniExtractDir${File.separator}pictures") {
+    from("${project.layout.buildDirectory.asFile.get()}${File.separator}tmp${File.separator}jniExtractDir${File.separator}pictures") {
         include "*"
     }
     into "pictures"
@@ -57,13 +57,12 @@ task saveVideoData(type: Copy) {
 tasks.withType(JavaExec) {
     dependsOn tasks.copyVideoData
     finalizedBy(tasks.saveVideoData)
-    workingDir workingDirectory
+    workingDir(workingDirectory)
     argsString(targetConfiguration)
     
     def components = [
             System.getProperty("java.library.path"),
-            "$buildDir${File.separator}tmp${File.separator}jniExtractDir",
-            Paths.get(projectDir.toString(), "opencv", "standard", "build", "lib", "Debug").toString()
+            workingDirectory,
     ]
     systemProperty 'java.library.path', components.join(File.pathSeparator)
 }
@@ -72,6 +71,9 @@ repositories {
     maven {
         url 'file:///C:/Users/Public/wpilib/2024/maven'
     }
+    maven {
+        url 'file:///home/squedgy/wpilib/2024/maven'
+    }
     mavenLocal()
     mavenCentral()
     maven {
@@ -79,22 +81,37 @@ repositories {
     }
 }
 
-def files = [
-        "C:\\Users\\Public\\wpilib\\2024\\maven\\edu\\wpi\\first\\ntcore\\ntcore-cpp\\2024.1.1\\ntcore-cpp-2024.1.1-windowsx86-64.zip",
-        "C:\\Users\\Public\\wpilib\\2024\\maven\\edu\\wpi\\first\\wpinet\\wpinet-cpp\\2024.1.1\\wpinet-cpp-2024.1.1-windowsx86-64.zip",
-        "C:\\Users\\Public\\wpilib\\2024\\maven\\edu\\wpi\\first\\wpiutil\\wpiutil-cpp\\2024.1.1\\wpiutil-cpp-2024.1.1-windowsx86-64.zip",
-        "C:\\Users\\Public\\wpilib\\2024\\maven\\edu\\wpi\\first\\thirdparty\\frc2024\\opencv\\opencv-cpp\\4.8.0-2\\opencv-cpp-4.8.0-2-windowsx86-64.zip"
-]
-
 task extractDeps {
     doLast {
         copy {
+            def home = System.getProperty("user.home");
+            logger.lifecycle("Home: $home")
+            def files;
+            if(home.startsWith("/") || home.startsWith("~")) {
+                files = [
+                        "$home/wpilib/2024/maven/edu/wpi/first/ntcore/ntcore-cpp/2024.1.1/ntcore-cpp-2024.1.1-linuxx86-64.zip",
+                        "$home/wpilib/2024/maven/edu/wpi/first/wpiutil/wpiutil-cpp/2024.1.1/wpiutil-cpp-2024.1.1-linuxx86-64.zip",
+                        "$home/wpilib/2024/maven/edu/wpi/first/wpilibc/wpilibc-cpp/2024.1.1/wpilibc-cpp-2024.1.1-linuxx86-64.zip",
+                        "$home/wpilib/2024/maven/edu/wpi/first/thirdparty/frc2024/opencv/opencv-cpp/4.8.0-2/opencv-cpp-4.8.0-2-linuxx86-64.zip",
+                ]
+            } else {
+                files = [
+                    "C:\\Users\\Public\\wpilib\\2024\\maven\\edu\\wpi\\first\\ntcore\\ntcore-cpp\\2024.1.1\\ntcore-cpp-2024.1.1-windowsx86-64.zip",
+                    "C:\\Users\\Public\\wpilib\\2024\\maven\\edu\\wpi\\first\\wpinet\\wpinet-cpp\\2024.1.1\\wpinet-cpp-2024.1.1-windowsx86-64.zip",
+                    "C:\\Users\\Public\\wpilib\\2024\\maven\\edu\\wpi\\first\\wpiutil\\wpiutil-cpp\\2024.1.1\\wpiutil-cpp-2024.1.1-windowsx86-64.zip",
+                    "C:\\Users\\Public\\wpilib\\2024\\maven\\edu\\wpi\\first\\thirdparty\\frc2024\\opencv\\opencv-cpp\\4.8.0-2\\opencv-cpp-4.8.0-2-windowsx86-64.zip",
+                ]
+            }
+            logger.lifecycle("Files: $files")
+
             files.each {
                 from zipTree(it).asCollection()
             }
 
             include "**/*.lib"
             include "**/*.dll"
+            include "**/*.so"
+            include "**/*.so.*"
 
             into workingDirectory
         }

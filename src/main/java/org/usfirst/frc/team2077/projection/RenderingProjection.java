@@ -55,10 +55,12 @@ public final class RenderingProjection {
         bounds = values.bounds;
         global = values.global;
         transform = values.transform;
+        transform.translate(-bounds.getX(), -bounds.getY());
+
         forwardTransform = values.forwardTransform;
         globalForwardTransform = values.globalForwardTransform;
-        horizontalFovAngle = values.horizontalFovAngle;
-        verticalFovAngle = values.verticalFovAngle;
+        horizontalFovAngle = Math.toRadians(values.horizontalFovAngle);
+        verticalFovAngle = Math.toRadians(values.verticalFovAngle);
         K = values.K;
         focalLength = values.focalLength;
     }
@@ -169,7 +171,7 @@ public final class RenderingProjection {
             bounds(new Rectangle2D.Double(0, 0, resolution.getWidth(), resolution.getHeight()));
             global(false);
             globalForwardTransform(0, 0);
-            horizontalFovAngle = Math.toRadians(projector.getDefaultFov());
+            horizontalFovAngle = projector.getDefaultFov();
             verticalFovAngle = 0;
             this.K = projector.getDefaultK();
             focalLength = 0;

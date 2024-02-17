@@ -39,7 +39,7 @@ public final class SourceProjection {
 
     public SourceProjection(Values values) {
         projector = values.projector;
-        fovAngleHorizontal = values.fovAngleHorizontal;
+        fovAngleHorizontal = Math.toRadians(values.fovAngleHorizontal);
         cameraFovDiameter = values.cameraFovDiameter;
         cameraFovCenterX = values.cameraFovCenterX;
         cameraFovCenterY = values.cameraFovCenterY;

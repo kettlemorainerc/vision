@@ -6,12 +6,12 @@ import org.usfirst.frc.team2077.video.interfaces.RenderedView;
 import org.usfirst.frc.team2077.video.interfaces.VideoSource;
 
 /**
- * EquirectangularProjector projection x = \u03c6 (azimuth), y = \u03b8 (polar).
+ * EquirectangularProjector projection x = φ (azimuth), y = θ (polar).
  * <p>
  * In the global spherical coordinate space, center of the image is at
- * {\u03c6,\u03b8} = {0,\u03c0/2}. For a full spherical image,
- * \u03c6 = -\u03c0 is left, \u03c6 = \u03c0 is right,
- * \u03b8 = 0 is up, and \u03b8 = \u03c0 is down.
+ * {φ,θ} = {0,π/2}. For a full spherical image,
+ * φ = -π is left, φ = π is right,
+ * θ = 0 is up, and θ = π is down.
  * <p>
  * \u00A9 2018
  * @author FRC Team 2077
