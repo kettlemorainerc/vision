@@ -1,7 +1,9 @@
 package org.usfirst.frc.team2077.startup;
 
-import org.opencv.core.Mat;
+import org.opencv.core.*;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.osgi.OpenCVNativeLoader;
+import org.usfirst.frc.team2077.FrameCounter;
 import org.usfirst.frc.team2077.projection.*;
 import org.usfirst.frc.team2077.projector.*;
 import org.usfirst.frc.team2077.source.*;
@@ -13,12 +15,15 @@ import java.nio.IntBuffer;
 
 public class Startup {
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(Startup.class);
+    private static final Scalar GREEN = new Scalar(255, 0, 255, 0);
 
     public static void main(String[] args) {
         LOG.info(System.getProperty("java.library.path"));
         new OpenCVNativeLoader().init();
         Dimension viewResolution = new Dimension(1920, 1080);
         Dimension sourceResolution = new Dimension(1920, 1080);
+
+        FrameCounter counter = new FrameCounter();
 
         VideoView view = new OpenCvView(
                 viewResolution,
@@ -31,7 +36,15 @@ public class Startup {
                                 .fovAngleHorizontal(90)
                 ),
                 (FrameProcessor) (frame, overlay) -> {
+                    counter.recordFrame();
 
+                    Imgproc.rectangle(
+                            overlay,
+                            new Rect(0, 0, 100, 100),
+                            GREEN,
+                            5,
+                            Imgproc.LINE_4
+                    );
                 }
         );
 

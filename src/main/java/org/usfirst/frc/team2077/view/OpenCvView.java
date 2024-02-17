@@ -108,7 +108,7 @@ public class OpenCvView extends VideoView {
         }
     }
 
-    private static class MatBackedImage extends JComponent {
+    private class MatBackedImage extends JComponent {
         private final Mat mat;
         private final Dimension resolution;
         private final BufferedImage image;
@@ -159,6 +159,7 @@ public class OpenCvView extends VideoView {
             int y = (getHeight() - h) / 2;
             // scales from rendered size to component size
             g.drawImage(image_, x, y, w, h, null);
+            g.drawImage(overlay.image, x, y, w, h, null);
         }
     }
 
