@@ -18,7 +18,7 @@ public class OpenCvView extends VideoView {
     private final Object latch = new Object();
     private final MatBackedImage[] frames = new MatBackedImage[2];
     private final MatBackedImage overlay;
-    private final int[][] nextFrame;
+    private final IntBuffer[] nextFrame;
     private ProcessFrame frameState = ProcessFrame.ONE;
     private final Thread displayThread;
     private final JFrame frame;
@@ -34,13 +34,14 @@ public class OpenCvView extends VideoView {
         frames[0] = new MatBackedImage(resolution, 24, new int[] {0x00FF0000, 0x0000FF00, 0x000000FF});
         frames[1] = new MatBackedImage(resolution, 24, new int[] {0x00FF0000, 0x0000FF00, 0x000000FF});
         overlay = new MatBackedImage(resolution, 32, new int[] {0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000});
-        nextFrame = new int[][] {
-                ((BufferBackedDataBuffer) frames[0].image.getRaster().getDataBuffer()).data.array(),
-                ((BufferBackedDataBuffer) frames[1].image.getRaster().getDataBuffer()).data.array()
+        nextFrame = new IntBuffer[] {
+                ((BufferBackedDataBuffer) frames[0].image.getRaster().getDataBuffer()).data,
+                ((BufferBackedDataBuffer) frames[1].image.getRaster().getDataBuffer()).data
         };
 
         displayThread = new Thread(this::continuallyProcessFrames);
         displayThread.setDaemon(true);
+        displayThread.start();
 
         frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -60,7 +61,9 @@ public class OpenCvView extends VideoView {
     public void continuallyProcessFrames() {
         while(true) {
             try {
-                latch.wait();
+                synchronized(latch) {
+                    latch.wait();
+                }
             } catch (InterruptedException ignored) {
                 Thread.currentThread().interrupt();
                 return;
@@ -107,9 +110,11 @@ public class OpenCvView extends VideoView {
 
     private static class MatBackedImage extends JComponent {
         private final Mat mat;
+        private final Dimension resolution;
         private final BufferedImage image;
 
         public MatBackedImage(Dimension resolution, int bits, int[] masks) {
+            this.resolution = resolution;
             this.mat = new Mat(resolution.height, resolution.width, CvType.CV_8UC4);
 
             int red, green, blue, alpha = 0x0;
@@ -141,8 +146,19 @@ public class OpenCvView extends VideoView {
             this.image = new BufferedImage(model, raster, false, null);
         }
 
-        @Override public void paint(Graphics g) {
+        @Override public Dimension getPreferredSize() {
+            return resolution;
+        }
 
+        @Override public void paint(Graphics g) {
+            BufferedImage image_ = image;
+            double scale = Math.min(((double)getWidth()) / resolution.width, ((double)getHeight()) / resolution.height);
+            int w = (int) Math.round(resolution.width * scale);
+            int h = (int) Math.round(resolution.height * scale);
+            int x = (getWidth() - w) / 2;
+            int y = (getHeight() - h) / 2;
+            // scales from rendered size to component size
+            g.drawImage(image_, x, y, w, h, null);
         }
     }
 
@@ -178,8 +194,11 @@ public class OpenCvView extends VideoView {
             addr.setAccessible(true);
             Field cap = Buffer.class.getDeclaredField("capacity");
             cap.setAccessible(true);
+            Field lim = Buffer.class.getDeclaredField("limit");
+            lim.setAccessible(true);
 
             addr.setLong(buffer, address);
+            lim.setInt(buffer, (int) mat.total() * Integer.BYTES);
             cap.setInt(buffer, (int) mat.total() * Integer.BYTES);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);

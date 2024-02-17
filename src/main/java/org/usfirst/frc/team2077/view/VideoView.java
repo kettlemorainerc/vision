@@ -33,9 +33,12 @@ public abstract class VideoView {
     public abstract void processFrame(IntBuffer frameBuffer);
 
     /** Maps pixels from the source buffer mutably to the view array. */
-    protected final void mapPixels(IntBuffer source, int[] view) {
-        for(int idx = 0 ; idx < view.length ; idx += 2) {
-            view[pixelMapping[idx]] = source.get(pixelMapping[idx + 1]);
+    protected final void mapPixels(IntBuffer source, IntBuffer view) {
+        if(pixelMapping.length == 0) {
+            return;
+        }
+        for(int idx = 0 ; idx < view.limit() ; idx += 2) {
+            view.put(pixelMapping[idx], source.get(pixelMapping[idx + 1]));
         }
     }
 
@@ -65,12 +68,14 @@ public abstract class VideoView {
                 
                 double[] renderPixels = renderProjection.transformViewToRendering(pixel[x], pixel[y]);
                 if(renderPixels == null) {
+                    LOGGER.info("({}, {}) - null render", viewX, viewY);
                     continue;
                 }
                 
                 double[] renderXY = renderProjection.transformPixelToCartesian(renderPixels[x], renderPixels[y]);
                 double[] renderSphere = renderProjection.renderingProjection(renderXY[x], renderXY[y]);
                 if(renderSphere == null) {
+                    LOGGER.info("({}, {}) - null render sphere", viewX, viewY);
                     continue;
                 }
                 
@@ -80,11 +85,13 @@ public abstract class VideoView {
                       sourceProjection.transformNominalWorldToSource(worldSphere[x], worldSphere[y]);
                 double[] sourceXY = sourceProjection.sourceProjection(sourceSphere[x], sourceSphere[y]);
                 if(sourceXY == null) {
+                    LOGGER.info("({}, {}) - null sourceXY", viewX, viewY);
                     continue;
                 }
                 
                 double[] sourcePixel = sourceProjection.transformCartesianToPixel(sourceXY[x], sourceXY[y]);
                 if(sourcePixel == null) {
+                    LOGGER.info("({}, {}) - null sourcePx", viewX, viewY);
                     continue;
                 }
 
@@ -94,6 +101,7 @@ public abstract class VideoView {
                 boolean withinWidth = sourceX >= 0 && sourceX < resolution.width;
                 boolean withinHeight = sourceY >= 0 && sourceY < resolution.height;
                 if(!withinHeight || !withinWidth) {
+                    LOGGER.info("({}, {}) - ({}, {}) is not valid", viewX, viewY, sourceX, sourceY);
                     continue;
                 }
 
@@ -128,6 +136,7 @@ public abstract class VideoView {
         logRange("Source Pixel", sourcePixelRange);
 
         // only copy used elements (i)
+        LOGGER.info("Mapping {} elements", i);
         this.pixelMapping = Arrays.copyOf(newMap, i);
     }
 

@@ -49,8 +49,8 @@ public class HSL360ImageGenerator {
             }
             if (x%(w/24) == 1) x += w/24 - 4;
         }
-        ImageIO.write( image.getSubimage( w, h, w, h ), "PNG", new File( "src/resources/test/HSL-Equirectangular.png" ) );
-        //ImageIO.write( image, "PNG", new File( "HSL-Equirectangular.png" ) );
+        ImageIO.write( image.getSubimage( w, h, w, h ), "PNG", new File( "src/resources/test/HSL-EquirectangularProjector.png" ) );
+        //ImageIO.write( image, "PNG", new File( "HSL-EquirectangularProjector.png" ) );
     }
 
     private static int[] hslToRgb( double h, double s, double l ) {

@@ -175,6 +175,21 @@ public final class RenderingProjection {
             focalLength = 0;
         }
 
+        public Values K(double K) {
+            this.K = K;
+            return this;
+        }
+
+        public Values verticalFovAngle(double val) {
+            this.verticalFovAngle = val;
+            return this;
+        }
+
+        public Values horizontalFovAngle(double val) {
+            this.horizontalFovAngle = val;
+            return this;
+        }
+
         public Values bounds(Rectangle2D bounds) {
             this.bounds = bounds;
             return this;

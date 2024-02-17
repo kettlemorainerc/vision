@@ -143,6 +143,16 @@ public final class SourceProjection {
             backTransforms(0d);
         }
 
+        public Values K(double K) {
+            this.K = K;
+            return this;
+        }
+
+        public Values fovAngleHorizontal(double val) {
+            this.fovAngleHorizontal = val;
+            return this;
+        }
+
         public Values backTransforms(Double heading) {
             if(heading == null || heading == 0) {
                 return backTransforms(0, 0, 0, 0, 0);

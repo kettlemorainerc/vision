@@ -1,7 +1,7 @@
 package org.usfirst.frc.team2077.vision.processors;
 
-import org.opencv.aruco.ArucoDetector;
-import org.opencv.aruco.Dictionary;
+// import org.opencv.aruco.ArucoDetector;
+// import org.opencv.aruco.Dictionary;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
@@ -53,7 +53,7 @@ public class AprilTagDetection implements Main.FrameProcessor {
 
     }
 
-    private final ArucoDetector detector = new ArucoDetector(Dictionary.get(20));
+    // private final ArucoDetector detector = new ArucoDetector(Dictionary.get(20));
 
     Mat undistorted = new Mat();
     Mat grayscale = new Mat();
@@ -71,7 +71,7 @@ public class AprilTagDetection implements Main.FrameProcessor {
 
         List<Mat> corners = new LinkedList<>();
         Mat ids = new Mat();
-        detector.detectMarkers(grayscale, corners, ids);
+        // detector.detectMarkers(grayscale, corners, ids);
 
         {
             Point topLeft, bottomRight;
