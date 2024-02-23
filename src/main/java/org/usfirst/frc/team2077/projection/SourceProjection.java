@@ -132,11 +132,11 @@ public final class SourceProjection {
         public Values(Projector projector, Dimension source) {
             this.projector = projector;
             resolution = source;
-            fovAngleHorizontal = Math.toRadians(projector.getDefaultFov());
+            fovAngleHorizontal = Math.toRadians(projector.getDefaultFov(true));
             cameraFovDiameter = 1;
             cameraFovCenterX = 0.5;
             cameraFovCenterY = 0.5;
-            K = projector.getDefaultK();
+            K = projector.getDefaultK(true);
 
             cameraOriginXYZ = new double[] {0, 0, 24};
 

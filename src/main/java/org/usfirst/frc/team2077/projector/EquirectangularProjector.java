@@ -6,6 +6,18 @@ import org.usfirst.frc.team2077.projection.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
+/**
+ * EquirectangularProjector projection x = φ (azimuth), y = θ (polar).
+ * <p>
+ * In the global spherical coordinate space, center of the image is at
+ * {φ,θ} = {0,π/2}. For a full spherical image,
+ * φ = -π is left, φ = π is right,
+ * θ = 0 is up, and θ = π is down.
+ * <p>
+ * \u00A9 2018
+ * @author FRC Team 2077
+ * @author R. A. Buchanan
+ */
 public class EquirectangularProjector implements Projector {
     @Override public double[] renderingProjection(
           RenderingProjection projection,
@@ -79,11 +91,11 @@ public class EquirectangularProjector implements Projector {
         return new double[] {x, y};
     }
 
-    @Override public double getDefaultK() {
+    @Override public double getDefaultK(boolean source) {
         return 0;
     }
 
-    @Override public double getDefaultFov() {
+    @Override public double getDefaultFov(boolean source) {
         return 360;
     }
 }

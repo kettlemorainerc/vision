@@ -25,6 +25,6 @@ public interface Projector {
      */
     double[] sourceProjection(SourceProjection projection, double world_o_clock, double world_from_center);
 
-    double getDefaultK();
-    double getDefaultFov();
+    double getDefaultK(boolean source);
+    double getDefaultFov(boolean source);
 }

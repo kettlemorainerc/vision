@@ -72,11 +72,11 @@ public class CylindricalProjector implements Projector {
         return new double[] {x, y};
     }
 
-    @Override public double getDefaultK() {
+    @Override public double getDefaultK(boolean source) {
         return 0;
     }
 
-    @Override public double getDefaultFov() {
+    @Override public double getDefaultFov(boolean source) {
         return 360;
     }
 }

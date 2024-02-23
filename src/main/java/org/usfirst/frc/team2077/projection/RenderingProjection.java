@@ -2,7 +2,6 @@ package org.usfirst.frc.team2077.projection;
 
 import org.usfirst.frc.team2077.math.Matrix;
 import org.usfirst.frc.team2077.video.interfaces.Rendering;
-import org.usfirst.frc.team2077.view.VideoView;
 
 import java.awt.*;
 import java.awt.geom.*;
@@ -171,9 +170,9 @@ public final class RenderingProjection {
             bounds(new Rectangle2D.Double(0, 0, resolution.getWidth(), resolution.getHeight()));
             global(false);
             globalForwardTransform(0, 0);
-            horizontalFovAngle = projector.getDefaultFov();
+            horizontalFovAngle = projector.getDefaultFov(false);
             verticalFovAngle = 0;
-            this.K = projector.getDefaultK();
+            this.K = projector.getDefaultK(false);
             focalLength = 0;
         }
 
