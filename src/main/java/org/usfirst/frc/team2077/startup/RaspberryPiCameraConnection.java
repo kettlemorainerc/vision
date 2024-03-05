@@ -53,7 +53,6 @@ public class RaspberryPiCameraConnection extends Thread {
 
         while(true) {
             Session session = null;
-            ChannelExec exec = null;
 
             while(session == null) {
                 try {
@@ -75,35 +74,35 @@ public class RaspberryPiCameraConnection extends Thread {
                     } catch(InterruptedException ignored) {
                     }
                 }
+            }
 
-                try {
-                    exec = (ChannelExec) session.openChannel("exec");
-                    exec.setCommand(command.replace("$LOCALHOST", getReturnAddress(targetIp)));
-                    exec.setInputStream(null);
-                    exec.setOutputStream(null);
-                    exec.setErrStream(null);
+            try {
+                ChannelExec exec = (ChannelExec) session.openChannel("exec");
+                exec.setCommand(command.replace("$LOCALHOST", getReturnAddress(targetIp)));
+                exec.setInputStream(null);
+                exec.setOutputStream(null);
+                exec.setErrStream(null);
 
-                    exec.connect();
+                exec.connect();
 
-                    while(exec.isConnected() && !exec.isEOF() && !exec.isClosed()) {
-                        try {
-                            TimeUnit.SECONDS.sleep(1);
-                        } catch(InterruptedException ignored) {}
-                    }
-
-                    if(!exec.isClosed()) {
-                        exec.sendSignal("KILL");
-                    }
-                    exec.disconnect();
-                } catch(Exception e) {
-                    LOG.error("Failed to run or continue running raspberry pi command", e);
+                while(exec.isConnected() && !exec.isEOF() && !exec.isClosed()) {
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch(InterruptedException ignored) {}
                 }
+
+                if(!exec.isClosed()) {
+                    exec.sendSignal("KILL");
+                }
+                exec.disconnect();
+            } catch(Exception e) {
+                LOG.error("Failed to run or continue running raspberry pi command", e);
             }
         }
     }
 
     /**
-     * Chooses a network address through which the local host may be reached from a given remore host. Many remote
+     * Chooses a network address through which the local host may be reached from a given remote host. Many remote
      * commands require a network address for sending data back to this program. Where the host has multiple network
      * adapters or addresses, not all may be reachable from the remote. A working address is identified by opening a
      * temporary DatagramSocket and getting its address on the local end.
@@ -117,6 +116,12 @@ public class RaspberryPiCameraConnection extends Thread {
         try ( final DatagramSocket socket = new DatagramSocket() ) {
             socket.connect( InetAddress.getByName( remote ), 10002 );
             return socket.getLocalAddress().getHostAddress();
+        }
+    }
+
+    private static void assertPercentage(double value) {
+        if(value < 0 || value > 1) {
+            throw new IllegalArgumentException("Value must be a percentage (0-1)");
         }
     }
 
@@ -160,6 +165,11 @@ public class RaspberryPiCameraConnection extends Thread {
          * sensor that should be used for the extracted image.
          */
         public PiVideoFeed regionOfInterest(double x, double y, double w, double h) {
+            assertPercentage(x);
+            assertPercentage(y);
+            assertPercentage(w);
+            assertPercentage(h);
+
             this.roiX = x;
             this.roiY = y;
             this.roiW = w;

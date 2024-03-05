@@ -34,11 +34,20 @@ public class SquedgyLocalConfig extends Configuration {
                    "appsink"
              );
         } else {
-            command
+            command = String.join(
+                    " ! ",
+                    "mfvideosrc device-path=\"\\\\\\\\\\?\\\\display\\#int3480\\#4\\&8bc03bf\\&0\\&uid144512\\#\\{e5323777-f976-4f5b-9b55-b94699c46e44\\}\\\\\\{213a57b6-aacf-4210-9800-cd4c54dae676\\}\"",
+                    // "mfvideosrc device-path=\"\\\\\\\\\\?\\\\display\\#int3480\\#4\\&8bc03bf\\&0\\&uid144512\\#\\{e5323777-f976-4f5b-9b55-b94699c46e44\\}\\\\\\{bf89b5a5-61f7-4127-a279-e187013d7caf\\}\"",
+                    "video/x-raw,format=NV12,width=1920,height=1080,framerate=30/1",
+                    "videoconvert",
+                    "appsink"
+            );;
         }
 
         VideoView view = new OpenCvView(viewResolution, renderProj, sourceProj, (frame, overlay) -> {});
-        VideoSource source = new GstreamerSource()
+        VideoSource source = new GstreamerSource(sourceResolution, view, command);
+
+        return new SquedgyLocalConfig(source, view);
     }
 
     protected SquedgyLocalConfig(
