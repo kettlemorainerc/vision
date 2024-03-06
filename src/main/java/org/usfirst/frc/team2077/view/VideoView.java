@@ -38,7 +38,7 @@ public abstract class VideoView {
             return;
         }
 
-        for(int idx = 0 ; idx < pixelMapping.length ; idx += 2) {
+        for(int idx = 0 ; idx < pixelMapping.length - 1 ; idx += 2) {
             view.put(pixelMapping[idx], source.get(pixelMapping[idx + 1]));
         }
     }

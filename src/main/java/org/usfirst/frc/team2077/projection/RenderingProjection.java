@@ -1,7 +1,6 @@
 package org.usfirst.frc.team2077.projection;
 
 import org.usfirst.frc.team2077.math.Matrix;
-import org.usfirst.frc.team2077.video.interfaces.Rendering;
 
 import java.awt.*;
 import java.awt.geom.*;
